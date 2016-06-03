@@ -1,0 +1,87 @@
+---
+title: Estratégias para Classificação Binária
+date: "`r format(Sys.time(), '%d de %B de %Y')`"
+author: Eduardo Elias Ribeiro Junior \footnote{Universidade Federal do Paraná - DEST, \url{edujrrib@gmail.com}}
+bibliography: refers.bib
+csl: abntcite.csl
+fontsize: 11pt
+output:
+  pdf_document:
+    highlight: pygments
+    includes:
+      in_header: _setup-article.tex
+---
+
+```{r setup, include = FALSE}
+
+library(knitr)
+opts_chunk$set(
+    echo = FALSE,
+    cache = FALSE,
+    tidy = TRUE,
+    message = FALSE,
+    warning = FALSE,
+    fig.width = 7,
+    fig.height = 5,
+    fig.align = "center",
+    out.width = "1\\textwidth",
+    dev.args = list(family = "Palatino"))
+
+```
+
+<!--------------------------------------------- -->
+<!-- Resumo do trabalho -->
+<!--------------------------------------------- -->
+\begin{abstract}
+\lipsum[1]
+
+\vspace{0.2cm}
+\textbf{Palavras-chave:} Classificação, SVM,
+\end{abstract}
+
+<!--------------------------------------------- -->
+<!-- Sumário - tabela de conteúdo  -->
+<!--------------------------------------------- -->
+\tableofcontents
+\pagebreak
+
+# Introdução #
+
+\lipsum
+
+# Material e Métodos #
+
+## Material ##
+
+A base de dados em estudo refere-se à **`asbjk`**
+
+```{r, echo = TRUE}
+
+m0 <- lm(dist ~ speed + I(speed^2), data = cars)
+
+summary(m0)
+
+```
+
+## Métodos ##
+
+@james2013
+
+# Resultados #
+
+\lipsum
+
+# Conclusões #
+
+\lipsum
+
+# Referências #
+
+\small
+
+
+```{r, include = FALSE, eval = FALSE}
+
+rmarkdown::render("work-master.Rmd")
+
+```
