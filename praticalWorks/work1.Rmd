@@ -1,0 +1,130 @@
+% Machine Learning - Regressão Linear
+% Eduardo E. R. Junior - DEST/UFPR
+% `r format(Sys.time(), "%d de %B de %Y")`
+
+```{r, include = FALSE}
+source("_defs.R")
+```
+
+# Algoritmo massive #
+
+O algoritmo `massive`, implementado por [Daniel Ikenaga] como atividade
+proposta na disciplina ?? - Análise de Regressão Linear, tem por
+objetivo estudar o poder preditivo de modelos de regressão linear
+simples atráves da estimação massiva de possíveis modelos de regressão
+linear simples.
+
+O algoritmo se baseia nas seguintes etapas, a partir de um conjunto de
+dados qualquer* (ver as
+[considerações metodológicas](#consideracoes-metodologicas)):
+
+ - Separa o conjunto de dados em duas partes. Uma para estimação do
+   modelo e outra para predição;
+ - Salva todas as possíveis combinações das variáveis independentes, que
+   podem ser incluídas em um modelo de regressão linear simples;
+ - Estima, para cada combinação:
+     * Um modelo de regressão linear simples utilizando as variáveis da
+       combinação como preditores;
+     * O percentual de acerto de acordo com a regra _- acerto se o valor
+       arredondado, predito pelo modelo, for igual ao valor observado._
+
+Para uma ilustração do algoritmo utilizou-se o conjunto de dados,
+denominado `wine`. Este conjunto se refere a avaliação de vinhos
+brancos. Neste estudo foram observadas 10 características de cada vinho
+na qual pretende-se correlacionar com a qualidade do vinho, mensurada
+através de avaliadores que atribuíram notas de 1 a 9. Abaixo temos a
+estrutura R do conjunto.
+
+```{r}
+
+## browseURL("paste0(https://gitlab.c3sl.ufpr.br/di12/massive/raw/",
+##           "master/data/wine.rda")
+load("./data/wine.rda")
+str(wine)
+
+```
+
+Devido a grande quantidade de observações, `r nrow(wine)` ao todo,
+preferiu-se utilizar apenas 500 observações para aplicação do
+método. Além disso o número de modelos a serem estimados foi fixado em
+50, não mais todos os modelos que podem ser estimados. Isso devido ao
+tempo computacional demasiadamente gasto para execução da função. Abaixo
+temos o carregamento da função e sua utilização neste (sub)conjunto de
+dados.
+
+```{r, echo = TRUE, cache = TRUE}
+
+source("https://gitlab.c3sl.ufpr.br/di12/massive/raw/master/R/massive.R")
+
+load("./data/wine.rda")
+
+base <- wine[1:500, ]
+test <- massive(base, seed = 20124689)
+
+compara <- data.frame(aic = test$aic, acertos = test$pacertos)
+str(compara)
+
+```
+
+A implementação do algoritmo também calcula o valor de AIC para
+posterior comparação com o percentual de acertos proposto no
+algoritmo. Abaixo verificamos a relação destas duas medidas de qualidade
+do modelo onde uma leva em consideração a verossimilhança e o número de
+parâmetros do modelo e a outra somente o poder preditivo sem se importar
+com o modelo subjacente.
+
+
+```{r}
+
+library(lattice)
+xyplot(acertos ~ aic,
+       ylab = "Percentual de acertos",
+       xlab = "Critério de Akaike",
+       type = c("p", "smooth"),
+       grid = TRUE,
+       pch = 19,
+       data = compara)
+
+coefsAic <- test$coef[which.max(compara$acertos)][[1]]
+coefsMassive <- test$coef[which.max(compara$acertos)][[1]]
+
+```
+
+Neste gráfico o padrão esperado deveria ser uma relação linear
+inversamente proporcional, ou seja, quanto menor o AIC maior o
+percentual de acertos. Porém não é, exatamente, o observado na
+figura. Notamos que há uma correlação negativa entre as medidas mas há
+também, uma variabilidade muito grande ocasionando discordância na
+escolha de modelos pelas duas alternativas. Dentre os 50 modelos
+estimados o melhor modelo sugerido pelo AIC é o que contém as variáveis
+_`r names(coefsAic)`_ e o modelo sugerido pelo percentual de acertos
+contém _`r names(coefsMassive)`_.
+
+```{r, echo = FALSE}
+
+set.seed(20124689)
+index <- sample(1:500, 50)
+baseTest <- base[index, ]
+baseTrain <- base[-index, ]
+
+logiMassive <- test$model[which.max(compara$acertos)][[1]]
+logiAic <- test$model[which.min(compara$aic)][[1]]
+
+m0Aic <- lm(quality ~. , data = baseTest[, names(base)[logiAic]])
+
+## names(test$coef[which.max(compara$acertos)][[1]])
+## names(test$coef[which.min(compara$aic)][[1]])
+
+```
+
+# Melhorias metodológicas #
+
+# Melhorias computacionais #
+
+# Informações da sessão R #
+
+```{r}
+cat(format(Sys.time(),
+           format = "Atualizado em %d de %B de %Y.\n\n"))
+sessionInfo()
+```

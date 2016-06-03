@@ -1,0 +1,249 @@
+% Machine Learning - Cross Validation e Bootstrap
+% Eduardo E. R. Junior - DEST/UFPR
+% `r format(Sys.time(), "%d de %B de %Y")`
+
+```{r, include = FALSE}
+source("_defs.R")
+```
+
+```{r, include = FALSE}
+
+library(knitr)
+opts_chunk$set(cache = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               fig.align = "center")
+
+```
+
+# Conjunto de dados #
+
+Para a aplicação dos métodos de reamostragem apresentados em sala de
+aula utilizaremos a conjunto `faithful`, do pacote `datasets` do
+software R. Estes dados se referem a um estudo sobre o tempo entre
+erupções do gêiser _Old Faithful_ no Yellowstone National Park, Wyoming,
+Estados Unidos. Ao todo são `r nrow(faithful)` observações com registros
+de:
+
+* `eruptions:` tempo da erupção (em minutos); e
+* `waiting:` tempo de espera até a próxima erupção (em minutos)
+
+O interesse é prever o tempo de espera até a próxima erupção sabendo o
+tempo de duração da erupção ocorrida. Abaixo é apresentado um gráfico de
+dispersão entre as duas variáveis coletadas.
+
+```{r}
+
+xyplot(waiting ~ eruptions, type = c("p", "g", "smooth"),
+       lwd = 2, data = faithful)
+
+```
+
+# Cross Validation #
+
+Neste trabalho prático será aplicado o método de **Cross Validation**,
+em sua versão **k-fold** onde dividimos a base de dados de treino em k
+partes. O caso particular onde k é igual ao número de observações da base,
+cujo leva o nome de **leave-one-out** também será aplicado. Para o
+método k-fold, o valor de k escolhido será 10, para contraste com o
+leave-one-out.
+
+## Programação ##
+
+Esta seção é dedicada a exibição das funções programadas para realização
+do cálculo dos erros quadráticos médios da validação cruzada. As função
+foram extraídas do
+[trabalho prático](http://www.leg.ufpr.br/~eferreira/CE064/metodosDeReamostragem.html)
+apresentado em sala por Alcides Neto, Bruna Wundervald e Marcelo Maceno
+e pontualmente modificadas.
+
+```{r}
+
+## Cálculo do número de observações em cada grupo
+lc <- function(n, k) {
+    stopifnot(k > 0 && n > 0)
+    aux <- n
+    nk <- k
+    i <- vector("numeric", k)
+    while (nk > 0) {
+        i[nk] <- round(aux/nk)
+        aux <- aux - i[nk]
+        nk <- nk - 1
+    }
+    return(i)
+}
+
+## Repartição do conjunto de dados em k grupos
+kFold <- function(dados, k = 2, seed = NULL) {
+    if (!is.null(seed))
+        set.seed(seed)
+    n <- dim(dados)[1]
+    interval <- lc(n, k)
+    res <- vector("raw", k)
+    for (i in 1:k) {
+        temp <- sample(dim(dados)[1], interval[i], replace = FALSE)
+        res[i] <- list(dados[temp, ])
+        dados <- dados[-temp, ]
+    }
+    names(res) <- 1:k
+    return(res)
+}
+
+## Calculo do erro quadrático médio para cada grupo
+calcEQM <- function(dados, k, g, seed = NULL) {
+    dataSet <- kFold(dados, k, seed = seed)
+    ## eqm <- c()
+    eqm <- vector("numeric", k)
+    for (i in 1:k) {
+        valida <- as.data.frame(dataSet[i])
+        names(valida) <- names(dados)
+        treino <- data.frame()
+        for (elem in dataSet[-i]) {
+            treino <- rbind(treino, elem)
+        }
+        names(treino) <- names(dados)
+        mTreino <- lm(waiting ~ poly(eruptions, g), data = treino)
+        ## eqmt <- c(eqmt, mean(mTreino$residuals^2))
+        eqm[i] <- mean((valida$waiting - predict(mTreino, valida))^2)
+    }
+    ## message('Média do EQM do conjunto de Treino: ', mean(eqmt))
+    attr(eqm, "k.obs") <- sapply(dataSet, nrow, USE.NAMES = FALSE)
+    return(eqm)
+}
+
+## Calculo do erro quadrático médio de validação cruzada
+cv <- function(eqm) {
+    k.obs <- attr(eqm, "k.obs")
+    return(sum(k.obs/sum(k.obs) * eqm))
+}
+
+```
+
+## Aplicação ##
+
+Conforme indicado abaixo têm-se a aplicação do método considerando k =
+10 para um modelos Gaussiano com preditor linear descrito por polinômios
+de graus de 1 a 5 na variável `eruptions`.
+
+```{r}
+
+eqms <- sapply(1:5, function(x) {
+    aux <- calcEQM(faithful, k = 10, g = x, seed = 2012)
+    cv(aux)
+})
+
+xyplot(eqms ~ 1:5, type = c("p", "l", "g"))
+
+```
+
+Agora considerando k = `r nrow(faithful)`, ou seja, o método
+leave-one-out, temos:
+
+```{r}
+
+eqms <- sapply(1:5, function(x) {
+    aux <- calcEQM(faithful, k = nrow(faithful), g = x, seed = 2012)
+    cv(aux)
+})
+
+xyplot(eqms ~ 1:5, type = c("p", "l", "g"))
+
+```
+
+# Bootstrap #
+
+Um outro método de reamostragem também apresentado e bastante utilizado
+é o **Bootstrap** que consiste, em sua forma mais simples, na
+reamostragem, com reposição, das observações de um conjunto de
+dados. Isso é útil para estimar a distribuição empírica de
+estatísticas e com isso conseguir intervalos de confiança para as
+estimativas.
+
+
+## Programação ##
+
+Devido a sua aceitação e utilização dentre a comunidade aplicada de
+estatística vários softwares comerciais e gratuitos possuem rotinas para
+o método de reamostragem bootstrap. No R, como não poderia ser
+diferente, há um pacote dedicado ao método bootstrap, chamado
+`boot`. Porém devido a facilidade de programação, por ser um modelo
+Gaussiano e todos os métodos para estimação já estarem implementados,
+utilizaremos funções própria para reamostragem bootstrap.
+
+```{r}
+
+## Realiza a reamostragem e estimação
+bootlm <- function(formula, data, R, plot = FALSE) {
+    ## formula e data argumentos passados para lm
+    ## R número de replicas do modelo normal para estimação do intervalo
+    ## de confianca
+    boots <- replicate(R, {
+        index <- sample(nrow(data), nrow(data), replace = TRUE)
+        reamostra <- data[index, ]
+        m0 <- lm(formula, data = reamostra)
+        c0 <- coef(m0)
+    })
+    out <- data.frame(Estimate = as.numeric(t(boots)),
+                      Parameter = rep(rownames(boots), each = R))
+    ## return(list(out, t(boots)))
+    attr(out, "class") <- c("ci", "data.frame")
+    return(out)
+}
+
+## Método plot para o objeto gerado pela função acima
+plot.ci <- function(object, ...) {
+    densityplot(
+        ~Estimate | Parameter, data = object, grid = TRUE,
+        scale = list(x = list(relation = "free",
+                              alternating = 1),
+                     y = list(relation = "free")),
+        strip = strip.custom(bg = "gray"),
+        between = list(x = 0.2, y = 0.3),
+        ...
+    )
+}
+
+## Método para intervalos de confiança, por percentil, para o objeto
+## gerado pela função acima
+confint.ci <- function(object, param, level = 0.95, ...) {
+    aux <- aggregate(Estimate ~ Parameter, data = object,
+                     FUN = function(x) {
+                         probs = c((1 - level)/2, 0.5,
+                                   level + (1 - level)/2)
+                         quantile(x, probs = probs)
+                     })
+    out <- aux$Estimate
+    rownames(out) <- (aux$Parameter)
+    return(out)
+}
+
+```
+
+## Aplicação ##
+
+Faremos uso do modelo indicado pelos métodos k-fold e leave-one-out, com
+preditor linear sendo a função polinomial de 4º grau. Assim a estimação
+do modelo, calculando a incerteza via reamostragem bootstrap fica:
+
+```{r}
+
+formula <- waiting ~ poly(eruptions, 4)
+
+## Estimando R vezes os coefientes via reamostras
+coefs.boot <- bootlm(formula, faithful, R = 1000)
+
+## Visualizando a distribuição empirica das estimativas
+plot(coefs.boot)
+
+## Calculando o intervalo de confiança percentil
+confint(coefs.boot)
+
+```
+
+# Informações da sessão R #
+
+```{r}
+cat(format(Sys.time(),
+           format = "Atualizado em %d de %B de %Y.\n\n"))
+sessionInfo()
+```

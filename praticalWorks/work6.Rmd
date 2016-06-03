@@ -1,0 +1,513 @@
+% Machine Learning - Support Vector Machine
+% Eduardo E. R. Junior - DEST/UFPR
+% `r format(Sys.time(), "%d de %B de %Y")`
+
+
+```{r, include = FALSE}
+source("_defs.R")
+```
+
+```{r, include = FALSE}
+
+library(knitr)
+opts_chunk$set(cache = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               fig.align = "center")
+
+```
+
+# Implementações em R #
+
+Neste trabalho utilizaremos o _software_ R pela praticidade e por ser
+_software_ estatístico mais utilizado pela comunidade. No R diversos
+pacotes são destinado a _Machine Learning e Statistical Learning_, como
+pode ser visto em
+[Cran Task Views](https://cran.r-project.org/web/views/MachineLearning.html).
+
+Aqui, seguindo as recomendações do texto base da disciplina
+[An Introduction to Statistical Learning](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Sixth%20Printing.pdf),
+utilizaremos o pacote `e1071` que é uma implementação em R baseada na
+[LIBSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvm/).
+
+```{r}
+
+## Pacote principal
+library(e1071)
+
+##-------------------------------------------
+## Outros pacotes
+## library(LiblineaR)
+## library(klaR)
+## library(kernlab)
+## library(rdetools)
+
+```
+
+# Conjunto de dados #
+
+Para a aplicação dos métodos de classificação via SVM serão utilizados
+os dados `OJ` (_Oranje Juice_) do pacote `ISLR` (pacote complementar do
+livro-texto da disciplina). Esses dados reference a 1070 observações
+sobre compra de sucos de laranja em um mercado. Os registros contemplam
+a informação de interesse, suco comprado `CC` para _Citrus Hill_ e `MM`
+_Minute Maid_ e demais 17 características sobre o cliente e produto.
+
+```{r}
+
+##======================================================================
+## Os dados
+## help(OJ, h = "html")
+data(OJ, package = "ISLR")
+str(OJ)
+
+```
+
+O exercício da obtenção de um classificador para esse conjunto de dados
+também foi proposto no exercício 8, pág. 371 de _An Introduction to
+Statistical Learning_. Seguindo as orientações do exercício
+particionaremos a base de dados em `OJ.te` e `OJ.tr`, as bases de teste
+e treino respectivamente. 800 observações serão tomadas para treino.
+
+```{r}
+
+##----------------------------------------------------------------------
+## Separando os dados em teste e treino
+set.seed(2016)
+index <- sample(nrow(OJ), 800)
+OJ.tr <- OJ[index, ]
+OJ.te <- OJ[-index, ]
+
+```
+
+A seguir serão propostos classificadores com base em SVM, considerando
+_kernel_ `linear` (que adotando um valor de custo para classificações
+incorretas, tem o nome de _Support Vector Classifiers_), `polynomial`,
+`radial` e `sigmoid`.
+
+# Métodos de classificação #
+
+A função `e1071::svm(...)` é a função destinada à determinação dos
+vetores de suporte. O pacote `e1071` provém também diversos métodos para
+obtenção de resultados do classificador definido pela `svm`.
+
+Nas próximas seções todos os ajustes dos classificadores são realizados
+via função `svm`. Abaixo é exibido os argumentos da função.
+
+```{r}
+
+## Para determinar o classificador
+## help(svm, h = "html")
+args(e1071:::svm.default)
+
+```
+
+Para comparação dos classificadores serão utilizados inspeções visuais
+da curva ROC, bem como os resultados obtidos pela classificação. Para
+exibição dos resultados a função `compareROC` foi implementada.
+
+```{r}
+
+##======================================================================
+## Funções utéis
+
+library(Epi)
+compareROC <- function(models) {
+    ## Models uma lista nomeada com os resultados da função ROC do
+    ## modelos classificadores a serem comparados
+    tableC <- sapply(models,
+                     FUN = function(roc) {
+                         index <- with(roc$res,
+                                       which.max(sens + spec))
+                         round(cbind(roc$res[index, ],
+                                     "AUC" = roc$AUC), 4)
+                     })
+    rownames(tableC) <- c("sens", "spec", "pvp", "pvn", "prob", "AUC")
+    return(tableC)
+}
+
+```
+
+## SVM kernel linear ##
+
+$$
+K(x_i, x_k) = \left \langle x_i, \, x_k \right \rangle
+$$
+
+```{r}
+
+##-------------------------------------------
+## Classificador default
+(c0l <- svm(Purchase ~ ., kernel = "linear", data = OJ.tr,
+           probability = TRUE))
+
+## Resumo do classificador
+summary(c0l)
+
+## Tabela de classificação no treino
+pred.tr0l <- predict(c0l, newdata = OJ.tr, probability = TRUE)
+table(pred.tr0l, OJ.tr$Purchase)
+
+## Tabela de classificação no teste
+pred.te0l <- predict(c0l, newdata = OJ.te, probability = TRUE)
+table(pred.te0l, OJ.te$Purchase)
+
+## Probabilidades associadas as decisões
+probs.tr0l <- attr(pred.tr0l, "probabilities")[, 2]
+probs.te0l <- attr(pred.te0l, "probabilities")[, 2]
+
+```
+
+```{r, fig.width = 10}
+
+## Curvas ROC
+par(mfrow = c(1, 2))
+roc.te0l <- ROC(test = probs.tr0l, stat = OJ.tr$Purchase, plot = "ROC")
+roc.tr0l <- ROC(test = probs.te0l, stat = OJ.te$Purchase, plot = "ROC")
+
+```
+
+Perceba que a função `svm` define alguns argumentos sem que o usuário
+precise especificá-los. Pelo _default_ da função o método, denominado em
+sala como _Maximal Margin Classifier_. Abaixo definidos diferentes
+valores para o "custo" (que define quantos vetores de suportes serão
+utilizados na definição da fronteira).
+
+Comparação de classificadores via validação cruzada Cuidado o tuning é
+realizado via validação cruzada sob simulação assim diferentes
+realizações da função geram diferentes resultados. O refinamento dos
+parâmetros considerados para validação cruzada pode ser feito em
+`tune.control()`.
+
+```{r tune.linear, cache = TRUE}
+
+## Cuidado !
+set.seed(2016)
+(svm.tune <- tune(svm, Purchase ~ ., data = OJ.tr, kernel = "linear",
+                  ranges = list(cost = c(0.001, 0.5, 1, 10))))
+
+summary(svm.tune)
+plot(svm.tune)
+svm.tune$best.parameters
+
+```
+
+
+```{r}
+
+##-------------------------------------------
+## Definindo os melhor classificador nas validações cruzadas
+c1l <- svm(Purchase ~ ., kernel = "linear", data = OJ.tr,
+           cost = 0.5, probability = TRUE)
+
+## Resumo do classificador
+summary(c1l)
+
+## Gráficos condicionais das fronteiras de classificação
+##     Cuidado! Os valores das demais covariáveis utilizadas para
+##     classificação são definidas como 0. Isso pode ser alterado pelo
+##     argumento slice()
+plot(c1l, OJ.tr, WeekofPurchase ~ LoyalCH)
+
+## Tabela de classificação no treino
+pred.tr1l <- predict(c1l, newdata = OJ.tr, probability = TRUE)
+table(pred.tr1l, OJ.tr$Purchase)
+
+## Tabela de classificação no teste
+pred.te1l <- predict(c1l, newdata = OJ.te, probability = TRUE)
+table(pred.te1l, OJ.te$Purchase)
+
+## Probabilidades associadas as decisões
+probs.tr1l <- attr(pred.tr1l, "probabilities")[, 2]
+probs.te1l <- attr(pred.te1l, "probabilities")[, 2]
+
+```
+
+```{r, fig.width = 10}
+
+## Curvas ROC
+par(mfrow = c(1, 2))
+roc.te1l <- ROC(test = probs.tr1l, stat = OJ.tr$Purchase, plot = "ROC")
+roc.tr1l <- ROC(test = probs.te1l, stat = OJ.te$Purchase, plot = "ROC")
+
+```
+
+```{r, resultis = "asis"}
+
+##----------------------------------------------------------------------
+## Comparando via AUC, Sensibilidade, Especificidade, Negativo/Positivo,
+## Positivo/Negativo e Pontos de Corte respectivamente.
+models.linear <- list("c0l.treino" = roc.tr0l, "c1l.treino" = roc.tr1l,
+                      "c0l.teste" = roc.te0l, "c1l.teste" = roc.te1l)
+
+## Armazenando o classificador de melhor desempenho
+models.final <- list("linear" = roc.te0l)
+
+kable(compareROC(models.linear), align = c("c", "c", "c", "c"))
+
+```
+
+## SVM kernel polinomial ##
+
+$$
+K(x_i, x_k) = (c_0 + \gamma \left \langle x_i, \, x_k \right \rangle)^d
+$$
+
+```{r}
+
+##----------------------------------------------------------------------
+##    kernel = polinomial default
+(c0p <- svm(Purchase ~ ., kernel = "polynomial", data = OJ.tr,
+            probability = TRUE))
+
+## Resumo do modelo
+summary(c0p)
+
+## Classificação dos dados de teste
+pred.te0p <- predict(c0p, newdata = OJ.te, probability = TRUE)
+probs.te0p <- attr(pred.te0p, "probabilities")[, 2]
+roc.te0p <- ROC(test = probs.te0p, stat = OJ.te$Purchase, plot = "ROC")
+
+```
+
+```{r tune.polynomial, cache = TRUE}
+
+## Tuning dos parâmetros (um pouco, talvez bastante, demorado)
+set.seed(2016)
+(svm.tune <- tune(svm, Purchase ~ ., data = OJ.tr,
+                  kernel = "polynomial",
+                  ranges = list(
+                      cost = c(0.01, 1, 10),
+                      gamma = c(0.01, 1/ncol(OJ), 0.1),
+                      coef0 = c(-1, 0, 1),
+                      degree = c(2, 3, 4, 5)
+                      )))
+
+summary(svm.tune)
+svm.tune$best.parameters
+
+```
+
+```{r}
+
+##-------------------------------------------
+## Definindo os melhor classificador com base nas validações cruzadas
+c1p <- svm(Purchase ~ ., kernel = "polynomial", data = OJ.tr,
+           cost = 10, gamma = 0.01, coef0 = 1, degree = 2,
+           probability = TRUE)
+
+## Resumo do modelo
+summary(c1p)
+plot(c1p, OJ.tr, WeekofPurchase ~ LoyalCH)
+
+## Classificação dos dados de teste
+pred.te1p <- predict(c1p, newdata = OJ.te, probability = TRUE)
+probs.te1p <- attr(pred.te1p, "probabilities")[, 2]
+roc.te1p <- ROC(test = probs.te1p, stat = OJ.te$Purchase, plot = "ROC")
+
+```
+
+```{r, resultis = "asis"}
+
+##----------------------------------------------------------------------
+## Comparando via AUC, Sensibilidade, Especificidade, Negativo/Positivo,
+## Positivo/Negativo e Pontos de Corte respectivamente.
+models.poly <- list("c0p.teste" = roc.te0p, "c1p.teste" = roc.te1p)
+
+## Armazenando o classificador de melhor desempenho
+models.final$polynomial <- roc.te1p
+
+kable(compareROC(models.poly), align = c("c", "c"))
+
+```
+
+## SVM kernel radial ##
+
+$$
+K(x_i, x_k) = \exp(-\gamma \left \| x_i, \, x_k \right \|^2 )
+$$
+
+```{r}
+
+##----------------------------------------------------------------------
+##    kernel = radial basis
+(c0r <- svm(Purchase ~ ., kernel = "radial", data = OJ.tr,
+            probability = TRUE))
+
+## Resumo do modelo
+summary(c0r)
+
+## Classificação dos dados de teste
+pred.te0r <- predict(c0r, newdata = OJ.te, probability = TRUE)
+probs.te0r <- attr(pred.te0r, "probabilities")[, 2]
+roc.te0r <- ROC(test = probs.te0r, stat = OJ.te$Purchase, plot = "ROC")
+
+```
+
+```{r tune.radial, cache = TRUE}
+
+## Tuning dos parâmetros (um pouco demorado)
+set.seed(2016)
+(svm.tune <- tune(svm, Purchase ~ ., data = OJ.tr,
+                  kernel = "radial",
+                  ranges = list(
+                      cost = c(0.01, 1, 10),
+                      gamma = c(0.001, 0.01, 1/ncol(OJ), 0.1, 0.5, 1)
+                  )))
+
+summary(svm.tune)
+svm.tune$best.parameters
+
+```
+
+```{r}
+
+## Resumo do modelo
+plot(c0r, OJ.tr, WeekofPurchase ~ LoyalCH)
+
+## Armazenando o classificador de melhor desempenho
+models.final$radial <- roc.te0r
+
+```
+
+## SVM kernel sigmoid ##
+
+$$
+K(x_i, x_k) = \tanh(c_0 + \gamma \left \langle x_i, \, x_k \right \rangle )
+$$
+
+```{r}
+
+##----------------------------------------------------------------------
+##    kernel = sigmoid default
+(c0s <- svm(Purchase ~ ., kernel = "sigmoid", data = OJ.tr,
+            probability = TRUE))
+
+## Resumo do modelo
+summary(c0s)
+
+## Classificação dos dados de teste
+pred.te0s <- predict(c0s, newdata = OJ.te, probability = TRUE)
+probs.te0s <- attr(pred.te0s, "probabilities")[, 2]
+roc.te0s <- ROC(test = probs.te0s, stat = OJ.te$Purchase, plot = "ROC")
+
+```
+
+```{r tune.sigmoid, cache = TRUE}
+
+## Tuning dos parâmetros (um pouco demorado)
+set.seed(2016)
+(svm.tune <- tune(svm, Purchase ~ ., data = OJ.tr,
+                  kernel = "sigmoid",
+                  ranges = list(
+                      cost = c(0.01, 1, 10),
+                      gamma = c(0.001, 0.01, 1/ncol(OJ), 0.1, 0.5, 1),
+                      coef0 = c(-1, 0, 1)
+                  )))
+
+summary(svm.tune)
+svm.tune$best.parameters
+
+```
+
+```{r}
+
+##-------------------------------------------
+## Definindo os melhor classificador com base nas validações cruzadas
+c1s <- svm(Purchase ~ ., kernel = "sigmoid", data = OJ.tr,
+           cost = 10, gamma = 0.01, coef0 = 0, probability = TRUE)
+
+## Resumo do modelo
+summary(c1s)
+plot(c1s, OJ.tr, WeekofPurchase ~ LoyalCH)
+
+## Classificação dos dados de teste
+pred.te1s <- predict(c1s, newdata = OJ.te, probability = TRUE)
+probs.te1s <- attr(pred.te1s, "probabilities")[, 2]
+roc.te1s <- ROC(test = probs.te1s, stat = OJ.te$Purchase, plot = "ROC")
+
+```
+
+```{r, resultis = "asis"}
+
+##----------------------------------------------------------------------
+## Comparando via AUC, Sensibilidade, Especificidade, Negativo/Positivo,
+## Positivo/Negativo e Pontos de Corte respectivamente.
+models.sigmoid <- list("c0s.teste" = roc.te0s, "c1s.teste" = roc.te1s)
+
+## Armazenando o classificador de melhor desempenho
+models.final$sigmoid <- roc.te1s
+
+kable(compareROC(models.sigmoid), align = c("c", "c"))
+
+```
+
+## Comparação dos ajustes ##
+
+```{r}
+
+## Comparação visual
+plot(0, 0, xlim = c(0, 1), ylim = c(0, 1), type = "n",
+     xlab = "1-Specificity", ylab = "Sensitivity")
+abline(v = seq(0, 1, 0.1), h = seq(0, 1, 0.1), col = "gray90")
+abline(0, 1, col = "gray40")
+##
+sapply(1:length(models.final), function(i) {
+    with(models.final[[i]],
+         points(1 - res[, 2], res[, 1], type = "l", col = i))
+})
+##
+legend(x = 0.7, y = 0.4, lwd = 1,
+       bty = "n", col = 1:length(models.final),
+       legend = names(models.final))
+
+```
+
+```{r}
+
+## Comparação das medidas de classificação
+kable(compareROC(models.final), align = c("c", "c", "c", "c"))
+
+```
+
+# Sabatina #
+
+Proponha um classificador baseado em _Supporte Vector Machine_ para
+classificar a espécie das plantas no conjunto de dados `iris` do R.
+Considere ao menos 2 classificadores para comparação via classificação
+em uma base de teste.
+
+Para particionar os dados em base de treino e teste, pode-se seguir os
+comandos abaixo.
+
+```{r}
+
+##======================================================================
+## Sabatina
+data(iris, package = "datasets")
+
+## Dados balanceados com base na espécie
+table(iris$Species)
+
+## Utilize como semente seu GRR
+set.seed(20124689)
+index <- matrix(c(0, 50, 100), ncol = 3, nrow = 30, byrow = TRUE) +
+    replicate(3, sample(1:50, 30))
+
+## Particione os dados em dados de treino e dados de teste
+iris.tr <- iris[c(index), ]
+iris.te <- iris[-c(index), ]
+
+## Dados balanceados para treino também
+table(iris.tr$Species)
+table(iris.te$Species)
+
+```
+
+# Informações da sessão R #
+
+```{r}
+cat(format(Sys.time(),
+           format = "Atualizado em %d de %B de %Y.\n\n"))
+sessionInfo()
+```
