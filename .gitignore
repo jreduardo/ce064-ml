@@ -6,6 +6,7 @@
 *.snm
 *.tex
 *.vrb
+!_*.tex
 
 ## Emacs
 .#*
