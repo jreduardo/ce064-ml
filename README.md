@@ -1,5 +1,6 @@
-# Introdução ao Machine Learning
--------------------------------------------
+<img src = "https://raw.githubusercontent.com/JrEduardo/ce064-ml/master/c064-ml.png" width=150px align="right" display="block">
+
+# Introdução ao Machine Learning #
 
 Este repositório objetiva armazenar todos os arquivos desenvolvidos na
 disciplina
@@ -38,6 +39,7 @@ Para sugestões, críticas ou relato de problemas abra uma _issue_ em
 ou entre em contato por e-mail [edujrrib@gmail.com](mailto:edujrrib@gmail.com)
 
 [ce064]: http://www.leg.ufpr.br/doku.php/pessoais:e.ferreira:ce064
+[eferreira]: http://www.leg.ufpr.br/doku.php/pessoais:e.ferreira
 [walmes]: http://www.leg.ufpr.br/~eferreira
 [livro]: http://www.springer.com/us/book/9781461471370
 [amir]: http://princehonest.com/
