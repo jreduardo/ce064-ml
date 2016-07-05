@@ -1,4 +1,4 @@
-<img src = "https://raw.githubusercontent.com/JrEduardo/ce064-ml/master/c064-ml.png" width=150px align="right" display="block">
+<img src = "https://raw.githubusercontent.com/JrEduardo/ce064-ml/master/ce064-ml.png" width=150px align="right" display="block">
 
 # Introdução ao Machine Learning #
 
@@ -38,6 +38,12 @@ Para sugestões, críticas ou relato de problemas abra uma _issue_ em
 [htps://github.com/JrEduardo/ce064-ml/issues](https://github.com/JrEduardo/ce064-ml/issues)
 ou entre em contato por e-mail [edujrrib@gmail.com](mailto:edujrrib@gmail.com)
 
+## Licença ##
+
+Este material é distribuído sob a licença
+[GNU General Public License, versão 3], descrita no arquivo
+`LICENSE.md`, © 2015 E. E., Ribeiro Jr
+
 [ce064]: http://www.leg.ufpr.br/doku.php/pessoais:e.ferreira:ce064
 [eferreira]: http://www.leg.ufpr.br/doku.php/pessoais:e.ferreira
 [walmes]: http://www.leg.ufpr.br/~eferreira
@@ -46,3 +52,4 @@ ou entre em contato por e-mail [edujrrib@gmail.com](mailto:edujrrib@gmail.com)
 [solutions]: http://blog.princehonest.com/stat-learning/
 [pratical]: https://github.com/JrEduardo/ce064-ml/tree/master/praticalWorks
 [final]: https://github.com/JrEduardo/ce064-ml/tree/master/finalWork
+[GNU General Public License, versão 3]: https://www.gnu.org/licenses/gpl-3.0.html
