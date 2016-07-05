@@ -7,25 +7,144 @@ csl: abntcite.csl
 fontsize: 11pt
 output:
   pdf_document:
-    highlight: pygments
+    number_section: true
+    fig_caption: true
+    highlight: tango
+    keep_tex: yes
     includes:
       in_header: _setup-article.tex
 ---
 
 ```{r setup, include = FALSE}
+## “default”, “tango”, “pygments”, “kate”, “monochrome”, “espresso”,
+## “zenburn”, “haddock”
+##======================================================================
+## Configura opções de output no documento
+options(digits = 3, OutDec = ",", scipen=-1,
+        xtable.caption.placement = "top")
 
+##======================================================================
+## Configurações knitr
 library(knitr)
+library(xtable)
 opts_chunk$set(
     echo = FALSE,
-    cache = FALSE,
+    cache = TRUE,
     tidy = TRUE,
     message = FALSE,
     warning = FALSE,
-    fig.width = 7,
-    fig.height = 5,
+    fig.pos = "H",
+    fig.width = 8,
+    fig.height = 4,
     fig.align = "center",
-    out.width = "1\\textwidth",
+    out.width = "0.95\\textwidth",
     dev.args = list(family = "Palatino"))
+
+##======================================================================
+## Configurações lattice
+library(lattice)
+library(latticeExtra)
+mycol <- c(1, "#377EB8", "#E41A1C", "#4DAF4A",
+           "#ff00ff", "#FF7F00", "#984EA3", "#FFFF33")
+ps <- list(
+    box.rectangle = list(col = 1, fill = c("gray70")),
+    box.umbrella = list(col = 1, lty = 1),
+    box.dot = list(pch = "|"),
+    dot.symbol = list(col = 1, pch = 19),
+    dot.line = list(col = "gray50", lty = 3),
+    plot.symbol = list(col = 1),
+    plot.line = list(col = 1),
+    plot.polygon = list(col = "gray95"),
+    superpose.line = list(col = mycol, lty = 1),
+    superpose.symbol = list(col = mycol, pch = 1),
+    superpose.polygon = list(col = mycol),
+    strip.background = list(col = c("gray90", "gray70")))
+trellis.par.set(ps)
+
+```
+
+```{r, include=FALSE}
+
+##======================================================================
+## Funções e pacotes utilizados
+
+##-------------------------------------------
+## Pacotes
+pacotes <- list("caret", "MASS", "klaR", "mda", "mboost",
+                "randomForest", "kernlab", "plyr", "pROC",
+                "lattice", "latticeExtra")
+sapply(pacotes, require, character.only = TRUE)
+
+##-------------------------------------------
+## Função para comparação dos resultados em tabela
+tableCompare <- function(models) {
+    ## models <- list(...)
+    ##-------------------------------------------
+    ## Para o AUC nos rept * k-fold
+    cvs <- resamples(models)
+    aucs <- apply(cvs$values[, grepl("ROC", names(cvs$values))],
+                  MARGIN = 2, FUN = function(x) {
+                      test <- t.test(x)
+                      paste0(round(test$estimate, 3), " (",
+                             paste(round(test$conf.int, 3),
+                                   collapse = ", "),
+                             ")")
+                  })
+    ##-------------------------------------------
+    ## Para Acuracia, Especificidade, Sensitividade, PPV, NPV e AUC da
+    ## classificação da base de teste
+    res <- sapply(models, FUN = function(m) {
+        res <- confusionMatrix(predict(m, spam.te), spam.te$type)
+        accur <- paste0(round(res$overall["Accuracy"], 3), " (",
+                        paste(round(res$overall["AccuracyLower"], 3),
+                              round(res$overall["AccuracyUpper"], 3),
+                              sep = ", "), ")")
+        ##-------------------------------------------
+        library(pROC)
+        pred <- predict(m, spam.te, type = "prob")
+        roc <- round(roc(spam.te$type, pred[, "spam"])$auc, 3)
+        c("accur" = accur, round(res$byClass[1:4], 3), roc)
+    })
+    tab <- rbind(aucs, res)
+    rownames(tab) <- c("AUC*", "Acurácia*", "Sensibilidade",
+                       "Especificidade", "PPV", "NPV", "AUC")
+    return(tab)
+}
+
+##-------------------------------------------
+## Função para comparação dos resultados na curva ROC
+curveCompare <- function(models, title.leg = NULL) {
+    library(pROC)
+    ## models <- list(...)
+    rocs <- lapply(models, FUN = function(m) {
+        pred <- predict(m, spam.te, type = "prob")
+        roc(spam.te$type, pred[, "spam"])
+    })
+    if (is.null(names(rocs))) {
+        names(rocs) <- paste("Model", 1:length(models))
+    }
+    aux <- lapply(rocs, FUN = function(roc)
+        cbind(esp = roc$specificities, sens = roc$sensitivities)
+        )
+    da <- plyr::ldply(aux, .id = "model")
+    ##-------------------------------------------
+    ## Com a lattice
+    xyplot(esp ~ 1-sens,
+           groups = model,
+           data = da,
+           type = c("g", "l"),
+           xlab = "1 - Especificidade",
+           ylab = "Sensibilidade",
+           auto.key = list(
+               title = title.leg,
+               cex.title = 1,
+               lines = TRUE,
+               points = FALSE,
+               corner = c(0.9, 0.2))) +
+        latticeExtra::layer(
+            panel.abline(0, 1, col = "gray30")
+        )
+}
 
 ```
 
@@ -33,11 +152,30 @@ opts_chunk$set(
 <!-- Resumo do trabalho -->
 <!--------------------------------------------- -->
 \begin{abstract}
-\lipsum[1]
+
+Em Machine Learning têm-se em diversas situações o interesse em realizar
+predições a partir de algoritmos computacionais que independam da ação
+humana. Uma das mais comuns tarefas preditivas no campo aplicado é a de
+classificação. Neste trabalho apresentamos um rol de técnicas de
+classificação binária aplicadas a um conjunto de dados do repositório
+UCI Machine Learning que refere-se a classificação de e-mails em
+\texttt{spam} ou \texttt{não-spam}. As técnicas de classificação
+apresentadas e aplicadas permeiam os campos de Estatística Multivariada,
+Machine Learning e Inferência Paramétrica. Foram ao todo 11 técnicas de
+classificadas sob o qual a abordagem via Random Forest (árvores de
+decisão aleatórias) apresentou o melhor desempenho considerando resumos
+da curva ROC obtidos de classificações na base de teste e nas amostras
+de validação cruzada.
 
 \vspace{0.2cm}
-\textbf{Palavras-chave:} Classificação, SVM,
+\begin{minipage}{13.5cm}
+\textbf{Palavras-chave: }{\it Classificação, Análise Discriminante,
+Regressão Logística, Árvores de decisão, Random Forest, Bagging,
+Boosting, SVM}.
+\end{minipage}
+
 \end{abstract}
+
 
 <!--------------------------------------------- -->
 <!-- Sumário - tabela de conteúdo  -->
@@ -47,41 +185,1010 @@ opts_chunk$set(
 
 # Introdução #
 
-\lipsum
+Em Estatística aplicada pode-se destacar dois principais interesses a
+cerca da análise de dados, são eles: i) Compreender o relacionamento
+entre variáveis de interesse e características de uma amostra e; ii)
+Realizar predições por meio de métodos estatísticos ajustados por dados
+de uma amostra.
+
+Na área de Aprendizado de Máquina (Machine Learning), o segundo tópico
+citado é predominante. Nessa área têm-se interesse em obter algoritmos
+computacionais que independam da ação humana, ou seja, que permitam o
+computador aprender. Para tal finalidade diversas ferramentas foram
+propostas não se restringindo a modelagem estatísticas da forma
+convencional (adotando um modelo de probabilidades para a variável de
+interesse condicionada às covariáveis, cuja há uma relação funcional
+entre essas variáveis). @Breiman2001 discute a excessiva utilização de
+modelos estatísticos em contraste com as abordagens presentes no
+aprendizado de máquina.
+
+Tanto em Aprendizado de Máquina quanto na Estatística em geral, no
+contexto univariado, as ferramentas para análise são específicas à
+classe da variável resposta. Para variáveis quantitativas (contínuas ou
+discretas) têm-se interesse em predizer o valor da variável para uma
+nova observação não presente na amostra, e.g. o preço de uma ação do
+mercado financeiro, já para variáveis qualitativas o interesse está na
+classificação de novas observações nas classes da variável em estudo,
+e.g. classificar o estado de uma doença.
+
+Neste trabalho aborda-se estratégias para classificação no caso de uma
+variável qualitativa binária, que contém apenas duas
+classificações. Essas estratégias permeiam os campos de modelagem
+estatística da forma convencional e algoritmos da área de aprendizado de
+máquina. Essas abordagens são descritas na Seção
+\ref{material-e-metodos}. O conjunto de dados, sob o qual aplica-se os
+métodos para classificação, refere-se a e-mails recebidos por
+funcionários de uma empresa onde deseja-se classificá-los como spams ou
+não-spams, detalhes sobre o conjunto de dados são descritos na Seção
+\ref{material-e-metodos}.
+
+Após a aplicação dos métodos é de interesse no trabalho avaliar o
+desempenho dos classificadores e os compará-los quanto ao poder
+preditivo. Para tal finalidade explora-se a curve ROC (_Receiver
+Operating Characteristic_), um popular gráfico de exibe simultaneamente
+os dois tipos de erros em todos os limites possíveis
+[@james2013]. Resumos obtidos a partir desta curva são utilizados para
+comparação de classificadores, em geral o valor de AUC (_Area Under
+Curve_) é exaustivamente apresentado e utilizado como critério de
+avaliação.
+
+O trabalho é organizado em cinco seções. Na Seção \ref{introducao}
+contextualiza-se o problema de classificação e as abordagens usualmente
+aplicadas. Na seção \ref{material-e-metodos} o conjunto de dados e os
+métodos para obtenção dos classificadores são apresentados. A seção
+\ref{resultados} é destinada à exibição e comparação dos resultados
+obtidos dos classificadores ajustados, ainda nesta seção discuti-se
+particularidades nos resultados e identifica-se o melhor classificador
+para o conjunto de dados em análise. Na seção \ref{conclusoes} são
+apresentados as conclusões obtidas no estudo e alguns possíveis tópicos
+que ainda podem ser abordados. Na seção \ref{referencias} as referências
+bibliográficas que embasam o estudo são apresentadas.
 
 # Material e Métodos #
 
-## Material ##
+```{r}
 
-A base de dados em estudo refere-se à **`asbjk`**
+##-------------------------------------------
+## Carregando o dataset
+data(spam, package = "kernlab")
+levels(spam$type) <- c("não.spam", "spam")
 
-```{r, echo = TRUE}
+##-------------------------------------------
+## Dividindo a base
+prop <- 0.70
 
-m0 <- lm(dist ~ speed + I(speed^2), data = cars)
+set.seed(20124689)
+spam <- spam[order(spam$type), ]
+tab <- c(with(spam, table(type)))
+index1 <- sample(1:tab[1], size = tab[1] * prop)
+index2 <- sample((tab[1] + 1):sum(tab), size = tab[2] * prop)
 
-summary(m0)
+spam.tr <- spam[c(index1, index2), ]
+spam.te <- spam[-c(index1, index2), ]
 
 ```
 
-## Métodos ##
+Para aplicação e competição dos métodos de classificação, que são
+descritos adiante, considerou-se o conjunto de dados disponibilizado por
+George Forman no repositório UC Irvine Machine Learning
+[@Lichman2013]. Os dados referem-se a mensagens de e-mails recebidas por
+funcionários da empresa Hewlett-Packard -
+HP^[Website da empresa http://www.hp.com/], cujo principal objetivo é
+obter um bom classificador de mensagens para **spams**, e-mails
+indesejados (anúncios de sites de produtos, propostas para dinheiro
+rápido, correntes, pornografia, entre outros), ou **não-spams**.
 
-@james2013
+\begin{multicols}{2}
+
+No conjunto de dados há `r nrow(spam)` e-mails registrados e para cada
+e-mail têm-se a informação de sua classificação como spam ou não-spam. A
+proporção de spams é exibida na Figura \ref{fig:pie}, onde nota-se que a
+maioria dos e-mails são não-spam. Porém, o percentual de e-mails
+classificados como spams não é tão baixo, em números absolutos são
+`r sum(spam$type == "spam")`, o que viabiliza a aplicação de métodos para
+classificação.
+
+Além da informação sobre a classificação do e-mail também são
+disponibilizadas outras informações com características do e-mail. Todas
+as variáveis presentes no conjunto de dados são descritas na Tabela
+\ref{tab:dados}. São `r ncol(spam)` variáveis, sendo que 48 delas se
+referem ao percentual de ocorrência de uma palavra no e-mail,
+e.g. \texttt{make} representa o percentual de ocorrências da palavra
+"make". Para essas variáveis há um considerável excesso de zeros.
+
+```{r pie, fig.height = 6, out.width="0.4\\textwidth", fig.pos="H", fig.cap="Proporção de e-mails classificados como spams e não-spams"}
+
+## Proporção de e-mails spam e não spam
+cols <- trellis.par.get("superpose.line")$col[1:2]
+props <- round(tab/sum(tab), 2)
+labels <- paste0(c("não-spam", "spam"), " - ", props*100, "%")
+pie(tab, labels = labels, col = c("#406DAC", "gray60"))
+
+```
+
+\end{multicols}
+
+Para evitar a escolha de classificadores que ajustem de forma demasiada
+à amostra sob a qual foram treinados (_overfit_), adotou-se a divisão
+aleatória do conjunto de dados. Duas bases foram constituídas, uma para
+ajuste dos classificadores com 70\% dos e-mails (`r nrow(spam.tr)`) e
+outra com 30\% (`r nrow(spam.te)` e-mails) para avaliar o desempenho dos
+classificadores ajustados. Como tentativa de preservar as
+características dos e-mails na base de treino, manteve-se o mesmo
+percentual de spams e não-spams nas partições do conjunto de dados.
+
+```{r, echo = FALSE, results = "asis"}
+
+inf1 <- "Percentual de ocorrências da palavra no e-mail"
+vas1 <- paste(paste0("\\texttt{", c(names(spam)[01:15], "..."),
+                     "}"), collapse = ", ")
+tip1 <- "númerica"
+
+inf2 <- "Percentual de ocorrências do caractere no e-mail"
+vas2 <- paste(paste0("\\texttt{", names(spam)[49:54], "}"), collapse = ", ")
+tip2 <- "númerica"
+
+inf3 <- "Comprimento médio das sequencias com letras maiúsculas"
+vas3 <- paste(paste0("\\texttt{", names(spam)[55], "}"), collapse = ", ")
+tip3 <- "númerica"
+
+inf4 <- "Comprimento da maior sequencia com letras maiúsculas"
+vas4 <- paste(paste0("\\texttt{", names(spam)[56], "}"), collapse = ", ")
+tip4 <- "númerica"
+
+inf5 <- "Número total de letras maiúsculas no e-mail"
+vas5 <- paste(paste0("\\texttt{", names(spam)[57], "}"), collapse = ", ")
+tip5 <- "númerica"
+
+inf6 <- "Classificação do e-mail em spam"
+vas6 <- paste(paste0("\\texttt{", names(spam)[58], "}"), collapse = ", ")
+tip6 <- "binária"
+
+cat("\\begin{table}[h]",
+    "\\normalsize",
+    paste("\\caption{Descrição das variáveis disponíveis no",
+          "conjunto de dados}"),
+    "\\label{tab:dados}",
+    "{\\renewcommand{\\arraystretch}{1.5}",
+    "\\begin{tabularx}{\\textwidth}{XXc}",
+    "\\hline",
+    "{\\bf Informação provida} & {\\bf Variáveis} & {\\bf Tipo} \\\\",
+    "\\hline",
+    paste(inf1, "&", vas1, "&", tip1, "\\\\"),
+    paste(inf2, "&", vas2, "&", tip2, "\\\\"),
+    paste(inf3, "&", vas3, "&", tip3, "\\\\"),
+    paste(inf4, "&", vas4, "&", tip4, "\\\\"),
+    paste(inf5, "&", vas5, "&", tip5, "\\\\"),
+    paste(inf6, "&", vas6, "&", tip6, "\\\\"),
+    "\\hline",
+    "\\end{tabularx}",
+    "}",
+    "\\end{table}",
+    sep = "\n")
+
+```
+
+Para obtenção dos classificadores são utilizados métodos de
+classificação que foram seccionados em quatro grandes grupos da área, os
+métodos fundamentados em: **Discriminant Analysis**; **Generalized
+Linear Model**; **Classification Trees**; e **Support Vetor Machine**. A
+seguir esses métodos são brevemente descritos.
+
+\subsubsection*{Discriminant Analysis}
+
+A análise discriminante é uma técnica da estatística multivariada que
+surgiu das contribuições de Fisher à área. É uma das técnicas mais
+antigas e mais empregadas para classificação.
+
+Seja $\Omega_1, \Omega_2, \ldots, \Omega_g$ populações assume-se que são
+normalmente distribuídas com vetores de média desconhecidos e mesma
+matriz de covariâncias. Ainda, considere $X_j$ a matriz de dimensão $n_j
+\times p$, com as $p$ covariáveis das $n_j$ observações pertencentes à
+j-ésima amostra. A regra de classificação será $$\textrm{alocar } x
+\textrm{ para } \Omega_j \textrm{ se } j =
+\underset{i \in (1, 2, \ldots, g)}{\textrm{arg max}} \left \{
+\log(\pi_i) - \frac{1}{2} (x-\bar{x})^t \Sigma^{-1} (x - \bar{x})
+\right \} $$ em que $\pi_i$ é uma probabilidade a priori de que a
+observação sob teste pertença a população $\Omega_i$, neste trabalho
+adotaremos como probabilidade a priori a proporção de observações em cada
+população. Esse classificador é chamado de discriminante linear de
+Fisher.
+
+Uma variação do discriminante linear ocorre quando não se considera que
+as matrizes de variância e covariância são iguais e assim a função que
+determina a regra de decisão ganha mais um termo flexibilizando a
+fronteira de decisão.
+
+Além dos métodos de análise discriminante linear e quadrática também
+serão abordados alguns métodos relativamente mais recentes para obtenção
+de classificadores fundamentados em análise discriminante, são eles
+**Análise Discriminante Regularizada - RDA** (do inglês _Regularized
+Discriminante Analysis_) e **Análise Discriminante Penalizada - PDA**
+(do inglês _Penalized Dicriminant Analysis_). Para RDA adiciona-se dois
+parâmetros, que são arbitrariamente escolhidos, à função que determina a
+regra de decisão. Estes parâmetros ponderam essa função flexibilizando
+sua forma. Na metodologia PDA atribui-se penalidades aos vetores
+discriminantes de Fisher, ou seja, maximiza-se o núcleo da
+verossimilhança para cada grupo sujeito a uma restrição imposta
+arbitrariamente. Essa abordagem surgiu para problemas _"small $n$ large
+$p$"_, portanto nas aplicações para esse conjunto de dados não espera-se
+grandes diferenças. Porém ressalta-se que este método é de grande valia,
+pois em casos $p > n$ as outras abordagens não funcionam.
+
+\subsubsection*{Generalized Linear Model}
+
+Dos modelos pertencentes a classe dos modelos lineares generalizados
+(_Generalized Linear Models_) será utilizados somente o modelo
+denominado modelo logístico, cujo a distribuição considerada para a
+relação condicional $Y \mid X$ é Binomial($m$, $\pi$) e função de
+ligação logito (que dá nome ao modelo). Assim o modelo pode ser escrito,
+juntamente com sua função de verossimilhança a ser maximizada, conforme
+abaixo:
+
+\begin{multicols}{2}
+$$
+\begin{aligned}
+    Y \mid X_i \sim \textrm{Binomial}(m_i, \, \pi_i) \\
+    \log \left ( \frac{\pi}{ 1 - \pi} \right ) = X\beta
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\Ell(\beta; \underline{y}) = \prod_{i=1}^{n} \pi_i^{y_i}
+    (1-\pi_i)^{1-y_i} \\
+\end{aligned}
+$$
+\end{multicols}
+
+\noindent sendo $\pi_i = \frac{e^{x_i \beta}}{e^{x_i \beta}+1}$. Assim
+obtendo as estimativas dos $\beta$'s a partir da maximização de $\Ell$
+podemos calcular $\pi_i$. A classificação do i-ésimo indivíduo
+seguirá a regra: se $\pi_i < p_c$, classifica no grupo 0 e se $\pi_i
+\geq p_c$ classifica no grupo 1. O valor de $p_c$ é arbitrário, porém
+pode-se escolher o valor de $p_c$ que confere a maior especificidade e
+sensibilidade.
+
+Neste trabalho aborda-se também a estimação dos parâmetros utilizando a
+metodologia de _Gradiente Boosting_ que, de forma resumida, reponderam
+iterativamente a amostra atribuindo maiores pesos às observações
+classificadas de forma incorreta na iteração anterior @Hofner2014.
+
+\subsubsection*{Classification Trees}
+
+Os métodos de classificação fundamentos em árvores de decisão ganharam
+espaço no campo da Estatística aplicada, principalmente, a partir dos
+anos de 1990. Esse método é uma extensão dos modelos de regressão e não
+é restrito à classificação. Em síntese o método se baseia na
+estratificação binária das covariáveis que levam a decisões, conforme
+ilustrado na Figura \ref{fig:ilustratree}.
+
+\begin{multicols}{2}
+
+Neste trabalho serão utilizados métodos de classificação que aprimoram
+as árvores de decisão. O primeiro deles é o procedimento
+\textbf{bagging} que consiste em reamostrar os dados de treino, obter um
+classificar para cada conjunto reamostrado e tomar como novo desfecho
+dos nós terminais as classes modais das reamostras classificadas. Com
+isso diminui-se a variância do classificador. Uma modificação no
+procedimento de bagging, fazendo com que cada árvore gerada pelas
+reamostras tenha preditores distintos, leva o nome de \textbf{Random
+Forest} que também serão aplicadas.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.37\textwidth]{images/ilustratree}
+\caption{Ilustração de árvores de decisão}
+\label{fig:ilustratree}
+\end{figure}
+
+\end{multicols}
+
+\subsubsection*{Support Vector Machines}
+
+Os métodos de classificação baseados em Support Vector Machines - SVM
+são construídos basicamente pela interpretação geométrica do
+problema. Dispondo as observações de um problema de classificação em um
+hiperplano de dimensão $p$, SVM procuram maximizar as margens do
+subespaço $p-1$ desse hiperplano que melhor separam as observações.
+
+Neste trabalho serão aplicados os métodos chamados de Support Vector
+Classifier que permitem classificações incorretas com relação às margens
+por meio de um parâmetro adicional $C$ que define a magnitude total
+deste erro. Além disso, também serão obtidos classificadores SVM com
+diferentes núcleos (_kernels_) conforme exibido abaixo:
+
+* Linear: $K(x_i, x_k) = \left \langle x_i, \, x_k \right \rangle$
+* Polinomial: $K(x_i, x_k) = (1 + \gamma \left \langle x_i, \, x_k
+  \right \rangle)^d$
+* Gaussiano: $K(x_i, x_k) = \exp(-\sigma \left \| x_i, \, x_k \right
+  \|^2 )$
+
+Os parâmetros que definem as expansões kernel são arbitrários. Nas
+análises se faz a avaliações de classificadores com diferentes valores
+dos parâmetros para escolhê-los.
+
+Para comparação dos classificadores obtidos com os diferentes métodos
+apresentados será feita a avaliação da curva ROC construída com os
+resultados das classificações na base de teste. Resumos da curva ROC,
+como a área abaixo da curva - AUC, acurácia, sensibilidade,
+especificidade, valor preditivo positivo - PPV (_Positive Predictive
+Values_) e negativo - NPV (_Negative Predictive Values_) são
+utilizados. Abaixo exibe-se os cálculos para cada um deles, conforme
+@Kuhn2008.
+
+\begin{multicols}{2}
+
+Considere a seguinte matriz de classificação.
+
+\begin{table}[H]
+\begin{tabular}{lcc}
+\hline
+\multirow{2}{*}{\bf Observado} & \multicolumn{2}{c}{\bf Predito} \\
+\cline{2-3}
+               & {\tt não-spam} & {\tt spam} \\
+\hline
+{\tt não-spam} &       A        &      C     \\
+{\tt spam}     &       B        &      D     \\
+\hline
+\end{tabular}
+\end{table}
+
+\columnbreak
+
+\begin{itemize}
+    \item {\tt acurácia} $= \frac{A+D}{A+B+C+D}$
+    \item {\tt sensibilidade} $= \frac{A}{A+C}$
+    \item {\tt especificidade} $= \frac{D}{B+D}$
+    \item {\tt PPV} $= \frac{A}{A+B}$
+    \item {\tt NPV} $= \frac{D}{C+D}$
+\end{itemize}
+
+\end{multicols}
+
+A `AUC` é calculada conforme utilizando o método de integração por
+trapézios.
+
+No trabalho também se faz uso do procedimento de validação cruzada
+_10-fold_, ou seja, ainda na base de treinamento se divide a amostra em
+dez partes utilizando 9 para ajuste do classificador e uma para
+avaliação. Isso é feito considerando 10 vezes, considerando um conjunto
+de 9 amostras diferentes a cada vez. Ainda repete-se esse procedimento 3
+vezes para minimizar o erro de escolha de um classificador
+sobreajustado. Assim têm-se 31 classificadores para cada técnica
+aplicada, 30 referentes as amostras da validação cruzada e 1
+considerando toda a base de treinamento.
 
 # Resultados #
 
-\lipsum
+Nesta seção são apresentados e discutidos os resultados provenientes dos
+classificadores, obtidos com os métodos citados na Seção
+\ref{material-e-metodos}, aplicados no conjunto de teste.
+
+Primeiramente são apresentados e comparados os classificadores de mesma
+do mesmo grupo, o classificador que obteve o melhor desempenho na
+comparação dentro do grupo foi mantido para comparação posterior entre
+os grupos.
+
+Todas as análises são realizadas com o pacote `caret` do R, que é um
+_wrapper_ para outros pacotes do R. A facilidade de utilizar as funções
+deste pacote é que os resultados são padronizados facilitando a
+comparação.
+
+
+```{r, include=FALSE}
+
+##======================================================================
+## Obtendo os classificadores
+
+library(caret)
+
+## Define 5 repetições da validação cruzada 10-fold
+cvCtrl <- trainControl(method = "repeatedcv",
+                       repeats = 3,
+                       summaryFunction = twoClassSummary,
+                       classProbs = TRUE)
+
+## Essa etapa é bastante demorada! Para ajuste de todos os
+## classificadores leva em torno de 1h
+
+##----------------------------------------------------------------------
+## DISCRIMINANT BASED
+
+set.seed(20124689)
+DB.linear <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "lda",
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+set.seed(20124689)
+DB.quadratic <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "qda",
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+set.seed(20124689)
+DB.regularized <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "rda",
+    tuneLength = 3,
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+set.seed(20124689)
+DB.penalized <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "pda",
+    tuneLength = 10,
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+##----------------------------------------------------------------------
+## GLM BASED
+
+set.seed(20124689)
+GB.glm <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "glm",
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+set.seed(20124689)
+GB.boost <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "glmboost",
+    tuneLength = 3,
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+##----------------------------------------------------------------------
+## TREES BASES
+
+set.seed(20124689)
+TB.bagging <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "treebag",
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+set.seed(20124689)
+TB.forest <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "rf",
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+##----------------------------------------------------------------------
+## SVM BASED
+
+set.seed(20124689)
+SB.linear <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "svmLinear",
+    tuneGrid = data.frame(
+        C = seq(0.01, 2, length.out = 5)
+    ),
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+set.seed(20124689)
+SB.poly <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "svmPoly",
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+set.seed(20124689)
+SB.radial <- train(
+    type ~ .,
+    data = spam.tr,
+    method = "svmRadial",
+    tuneLength = 5,
+    metric = "ROC",
+    trControl = cvCtrl
+)
+
+
+```
+
+```{r}
+
+## load("classifiers2.rda")
+models.final <- list()
+
+```
+
+## Discriminant Analysis-Based ##
+
+Os classificadores ajustados com base na metodologia de análise
+discriminante são:
+
+* `LDA`: Linear Discriminant Analysis
+* `QDA`: Quadratic Discriminant Analysis
+* `RDA`: Regularized Discriminant Analysis
+* `PDA`: Penalized Discriminant Analysis
+
+Foram testados diferentes valores para os parâmetros $\lambda$ e
+$\gamma$, na `RDA` e diferentes $\lambda$ na `PDA`, a fim de se obter o
+conjunto de parâmetros ótimos, o chamado _tunning_ em Aprendizado de
+Máquina.
+
+```{r grafDB, fig.cap="(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste."}
+
+##----------------------------------------------------------------------
+## Results of Discriminant Analysis Based
+
+DBs <- list(DB.linear, DB.quadratic, DB.regularized, DB.penalized)
+names(DBs) <- c("LDA", "QDA", "RDA", "PDA")
+
+curDB <- curveCompare(DBs, title.leg = "Método")
+rocDB <- dotplot(resamples(DBs), metric = "ROC")
+gridExtra::grid.arrange(
+    update(rocDB, sub = NULL, xlab = "AUC"),
+    curDB, ncol = 2)
+tabDB <- tableCompare(DBs)
+
+## Melhor desempenho
+models.final$"LDA" <- DB.linear
+
+```
+
+Observando a Figura \ref{fig:grafDB}, não há nenhum método que se
+destaca. Os intervalos de confiança construídos a partir das 30
+classificações feita na validação cruzada se sobrepões e os valores
+médios de AUC são muito próximos. Considerando as curvas ROC dos
+classificadores com todas as observações da base de treinamento, também
+não há grandes diferenças, destaca-se apenas uma menor sensibilidade
+quando considerado o classificador `QDA`, conforme pode ser visto na
+Tabela \ref{tab:DB}.
+
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores fundamentados em
+Análise Discriminante}
+\label{tab:DB}
+\begin{tabular}{lcccc}
+\hline
+{\bf Medida} & {\bf LDA} & {\bf QDA} & {\bf RDA} & {\bf PDA} \\
+\hline
+```{r, results="asis"}
+
+print(xtable(tabDB),
+      include.colnames = FALSE,
+      hline.after = NULL,
+      only.contents = TRUE,
+      add.to.row = list(
+          pos = list(2), command = "\\hline "
+      ))
+
+```
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+
+Outro resultado que chama a atenção é a similaridade dos resultados de
+`LDA` e `PDA`. Isso pode ser atribuído ao fato de que não há grande
+número de covariáveis na base ao ponto que as penalidades não afetam
+significativamente o ajuste do classificador.
+
+Assim adotamos como classificador representante da abordagem por análise
+discriminante o `LDA`.
+
+## Generalized Linear Model-Based ##
+
+Para os classificadores baseados em modelos lineares generalizados são
+tomados duas abordagens:
+
+* `GLM-MLE`: Generalized Linear Models ajustado via maxima
+  verossimilhança; e
+* `GLM-Boost`: Gradiente Boosting aplicado em GLM
+
+Para a abordagem Boosting também realizou-se o _tunning_ para o
+parâmetro `mstop` que determina o número de iterações. O valor que
+forneceu o melhor desempenho foi de 100 iterações.
+
+```{r grafGB, fig.cap="(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste."}
+
+##----------------------------------------------------------------------
+## Results of GLM Analysis Based
+
+GBs <- list(GB.glm, GB.boost)
+names(GBs) <- c("GLM-MLE", "GLM-Boost")
+
+curGB <- curveCompare(GBs, title.leg = "Método")
+rocGB <- dotplot(resamples(GBs), metric = "ROC")
+gridExtra::grid.arrange(
+    update(rocGB, sub = NULL, xlab = "AUC"),
+    curGB, ncol = 2)
+tabGB <- tableCompare(GBs)
+
+## Melhor desempenho
+models.final$"GLM-MLE" <- GB.glm
+
+```
+
+Na avaliação dos dois classificadores nota-se uma grande diferença de
+desempenho em favor do método via máxima verossimilhança
+tradicional. Isso pode ser observado tanto na Figura \ref{fig:grafGB},
+onde apresenta-se os intervalos de confiança baseados nas classificações
+de validação cruzada para AUC e as curvas ROC, quanto na Tabela
+\ref{tab:GB} que contém os resumos da curva ROC.
+
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores fundamentados em
+Modelos Lineares Generalizados}
+\label{tab:GB}
+\begin{tabular}{lcc}
+\hline
+{\bf Medida} & {\bf GLM-MLE} & {\bf GLM-Boost} \\
+\hline
+```{r, results="asis"}
+
+print(xtable(tabGB),
+      include.colnames = FALSE,
+      hline.after = NULL,
+      only.contents = TRUE,
+      add.to.row = list(
+          pos = list(2), command = "\\hline "
+      ))
+
+```
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+
+A superioridade da abordagem convencional de estimação dos parâmetros do
+modelo linear generalizado é particular desta análise. Em investigações do
+fato, pode-se atribuir esse melhor desempenho ao bom comportamento do
+conjunto de dados, eles são linearmente separáveis, desfavorecendo assim
+o método Boosting.
+
+Portanto, para representar a abordagem via modelos lineares
+generalizados o classificador `GLM-MLE` é mantido.
+
+## Classification Trees-Based ##
+
+Considerando agora os métodos baseados em árvores de decisão, são
+apresentados os resultados referentes as seguintes abordagens:
+
+* `Tree-BAG`: Bagging Classification Trees
+* `Rand-Forest`: Random Forest
+
+Das abordagens tratadas apenas para em Random Forest realizou-se o
+_tunning_. Este foi feito para o parâmetro `mtry` que representa o
+número de variáveis aleatórias escolhidas em cada divisão da amostra, o
+valor de melhor desempenho foi de 29 variáveis. Não foi realizada a
+"poda", ou _prune_ em inglês, das árvores.
+
+```{r grafTB, fig.cap="(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste."}
+
+##----------------------------------------------------------------------
+## Results of Decision Trees Analysis Based
+
+TBs <- list(TB.bagging, TB.forest)
+names(TBs) <- c("Tree-BAG", "Rand-Forest")
+
+curTB <- curveCompare(TBs, title.leg = "Método")
+rocTB <- dotplot(resamples(TBs), metric = "ROC")
+gridExtra::grid.arrange(
+    update(rocTB, sub = NULL, xlab = "AUC"),
+    curTB, ncol = 2)
+tabTB <- tableCompare(TBs)
+
+## Melhor desempenho
+models.final$"Rand-Forest" <- TB.forest
+
+```
+
+Para os resultados exibidos na Figura \ref{fig:grafTB} nota-se uma
+dissimilaridade entre os intervalos de AUC baseados nas 30
+classificações da validação cruzada (à esquerda) e a curva ROC de
+classificação da base de teste com o classificador ajustado com todos as
+observações da base de treinamento. O classificador `Rand-Forest`
+apresentou um melhor desempenho na validação cruzada, quando comparado
+com o `Tree-bag`, isso se reflete nos intervalos de confiança para AUC
+que não se sobrepõe. Porém quando utilizado toda a base de treinamento
+os resultados praticamente se equivalem, note a similaridade entre as
+curvas ROC à direita na Figura \ref{fig:grafTB}. Essa semelhança também
+é observada nos valores pontuais da curva ROC na Tabela \ref{tab:TB}. Na
+Tabela os valores pontuais apresentam um ligeiro melhor desempenho para
+o classificador `Tree-BAG`, mas quando observado o desempenho na
+validação cruzada o classificador `Rand-Forest` se sobressai.
+
+Assim, adotando o critério de melhor desempenho na validação cruzada
+mantemos o classificador `Rand-Forest` para comparação finais com os
+demais métodos.
+
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores fundamentados em
+Árvores de decisão}
+\label{tab:GB}
+\begin{tabular}{lcc}
+\hline
+{\bf Medida} & {\bf Tree-BAG} & {\bf Random-Forest} \\
+\hline
+```{r, results="asis"}
+
+print(xtable(tabTB),
+      include.colnames = FALSE,
+      hline.after = NULL,
+      only.contents = TRUE,
+      add.to.row = list(
+          pos = list(2), command = "\\hline "
+      ))
+
+```
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+
+## Support Vetor Machine-Based ##
+
+Finalmente no último grupo de métodos considerados no trabalho têm-se os
+resultados para os classificadores baseados em Support Vector
+Machines. Foram ajustados os classificadores considerando o kernel
+Linear e as expandindo as características das observações através dos
+kernels Polinomial e Gaussiano.
+
+* `SVM-Linear`: Support Vector Classifier com kernel Linear;
+* `SVM-Poly`: Support Vector Classifier com kernel Polinomial; e
+* `SVM-Gauss`: Support Vector Classifier com kernel Gaussiano.
+
+Para todos os cados realiza-se o _tunning_ do parâmetro `C` que
+determina o custo de classificação incorreta. Quando considerada a
+expansão via kernel polinomial também se faz o tunning dos parâmetros
+`degree` ($d$) e `scale` ($\gamma$), conjuntamente com o `C`, os
+parâmetros foram fixados em `degree` = 2, `scale` = 0,01 e `C` = 1. Para
+a expansão via expansão Gaussiana o parâmetro `sigma` ($\sigma$) foi
+fixado em 0,0282 com `C` = 4. No kernel linear o `C` que proporcionou um
+melhor desempenho foi de 1,502.
+
+```{r grafSB, fig.cap="(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste."}
+
+##----------------------------------------------------------------------
+## Results of SVM Analysis Based
+
+SBs <- list(SB.linear, SB.poly, SB.radial)
+names(SBs) <- c("SVM-Linear", "SVM-Poly", "SVM-Gauss")
+
+curSB <- curveCompare(SBs, title.leg = "Método")
+rocSB <- dotplot(resamples(SBs), metric = "ROC")
+gridExtra::grid.arrange(
+    update(rocSB, sub = NULL, xlab = "AUC"),
+    curSB, ncol = 2)
+tabSB <- tableCompare(SBs)
+
+## Melhor desempenho
+models.final$"SVM-Gauss" <- SB.radial
+
+```
+
+Nos resultados obtidos dos classificadores baseados em Support Vector
+Machines, temos algo similar ao apresentado na Seção
+\ref{classification-trees-based}. Os resultados baseados na validação
+cruzada, apresentados à esquerda na Figura \ref{fig:grafSB}, favorecem o
+classificador que utiliza a expansão de característica via kernel
+Gaussiano, embora os intervalos se estejam sobrepostos. Porém, nos
+resultados dos classificadores quando aplicados à base de teste são
+muito similares, à direita da Figura \ref{fig:grafSB}. Complementando a
+visualização gráfico os resultados pontuais são apresentados na Tabela
+\ref{tab:SB}. Nota-se que os classificadores obtiveram resultados
+realmente muito parecidos, mesmo para os resultados na validação cruzada
+a diferença se dá somente com três casas decimais.
+
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores fundamentados em
+Support Vector Machines}
+\label{tab:GB}
+\begin{tabular}{lccc}
+\hline
+{\bf Medida} & {\bf SVM-Linear} & {\bf SVM-Poly} & {\bf SVM-Gauss} \\
+\hline
+```{r, results="asis"}
+
+print(xtable(tabSB),
+      include.colnames = FALSE,
+      hline.after = NULL,
+      only.contents = TRUE,
+      add.to.row = list(
+          pos = list(2), command = "\\hline "
+      ))
+
+```
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+
+Mesmo que timidamente, nota-se que a expansão de características via
+kernel Gaussiano proporcionou melhores resultados. Assim manteve-se esse
+classificador no rol de classificadores elencados para comparação entre
+abordagens.
+
+## Comparação das abordagens ##
+
+```{r, include=FALSE}
+
+cvFINAL <- resamples(models.final)
+curFINAL <- curveCompare(models.final)
+xyFINAL <- update(
+    splom(cvFINAL, metric = "ROC"),
+    xlab = "Dispersão dos valores de AUC",
+    main = "",
+    ## varname.col = trellis.par.get("superpose.line")$col[2],
+    varname.cex = 0.8,
+    axis.text.cex = 0.5,
+    axis.text.col = rgb(0.2, 0.2, 0.2, 0.6),
+
+)
+dotFINAL <- update(
+    dotplot(cvFINAL),
+    layout = c(1, NA),
+    scales = "free",
+    xlab = c("", "", ""),
+    sub = NULL,
+    strip = strip.custom(
+        factor.levels = c(
+            "AUC", "Sensibilidade", "Especificidade")
+    )
+)
+
+(parFINAL <- update(
+    parallelplot(cvFINAL, metric = "ROC"),
+    xlab = "AUC",
+    scales = list(y = list(alternating = 2))
+))
+
+tabFINAL <- tableCompare(models.final)
+
+```
+
+Nesta seção, os métodos que apresentaram melhor desempenho em cada
+abordagem são contrastados. Os métodos sob comparação são os denominados
+por `LDA`, `GLM-MLE`, `Rand-Forest` e `SVM-Gauss`. Na figura
+\ref{fig:final1}, à esquerda, são apresentadas as curvas ROC,
+provenientes da classificação da base de teste, para cada um dos
+classificadores. As curvas apresentam comportamentos razoavelmente
+similares, mas percebe-se que o classificador `LDA` apresentou um
+desempenho insatisfatório com relação dos demais. Isso também é
+observado nos resultados da validação cruzada, apresentados à direita da
+Figura \ref{fig:final1}. Cada ponto neste gráfico representa um valor de
+AUC de cada um dos classificadores na validação cruzada. Perceba os
+valores obtidos para `LDA` estão todos abaixo da linha pontilhada que
+representa a igualdade de valores, ressaltando seu mal desempenho em
+comparação com os demais. Nas outras dispersões nota-se um melhor
+desempenho para `Rand-Forest` e uma similaridade entre `GLM-MLE` e
+`SVM-Gauss`.
+
+```{r final1, fig.pos="ht", fig.cap="(Esquerda) Curva ROC dos classificadores aplicados à base de teste. (Direita) Gráficos de dispersão dos valores de AUC obtidos para cada uma das 30 amostras da validação cruzada."}
+
+gridExtra::grid.arrange(curFINAL, xyFINAL, ncol = 2)
+
+```
+
+Na Figura \ref{fig:final2} outra apresentamos outra forma de comparação
+dos classificadores. Nesta figura temos os intervalos de confiança para
+a `especificidade`, `sensibilidade` e `AUC`, à esquerda, e os valores de
+AUC para cada uma das amostra da validação cruzada de cada uma dos
+classificadores, à direita. Em ambos gráficos a mesma indicação observada
+na Figura \ref{fig:final1} pode ser vista. Temos desempenhos melhores
+seguindo a ordem `Rand-Forest`, `SVM-Gauss`, `GLM-MLE` e por fim `LDA`.
+
+```{r final2, fig.pos="H", fig.height=6, fig.width=7.1, out.width="0.8\\linewidth", fig.cap="(Esquerda) Intervalos de confiança para especificidade, sensibilidade e área abaixo da curva ROC. (Direita) Valores de AUC. Ambos baseados nas 3 repetições das 10 amostras de validação cruzada"}
+
+gridExtra::grid.arrange(dotFINAL, parFINAL, ncol = 2)
+
+```
+
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores com melhores
+desempenhos}
+\label{tab:DB}
+\begin{tabular}{lcccc}
+\hline
+{\bf Medida} & {\bf LDA} & {\bf GLM-MLE} & {\bf Rand-Forest} & {\bf SVM-Gauss} \\
+\hline
+```{r, results="asis"}
+
+print(xtable(tabFINAL),
+      include.colnames = FALSE,
+      hline.after = NULL,
+      only.contents = TRUE,
+      add.to.row = list(
+          pos = list(2), command = "\\hline "
+      ))
+
+```
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+
+
+Com os resultados apresentados anteriormente temos que o melhor
+desempenho para classificação se deu considerando a abordagem baseada em
+árvores de decisão, mas especificamente o classificador **Random
+Forest**. Para as abordagens via Support Vector Machines (considerando a
+expansão via kernel Gaussiano) e Modelos Lineares Generalizados (modelo
+logístico ajustado via máxima verossimilhança) observou-se resultados
+similares e satisfatórios. Já para os métodos baseados em Análise
+Discriminante não se obteve um desempenho em comparação com as demais
+técnicas.
+
+\subsubsection*{Material Suplementar}
+
+Toda a análise foi realizada com o auxílio do software R e está
+disponível online no endereço
+<\url{https://github.com/JrEduardo/ce064-ml/tree/master/finalWork}>. Dúvidas,
+sugestões e críticas são sempre bem-vindas.
 
 # Conclusões #
 
-\lipsum
+No desenvolvimento do trabalho foram apresentados onze técnicas para
+obtenção de classificadores, seccionadas em quatro grandes áreas com
+abordagens distintas de classificação (fundamentadas em análise
+discriminante, modelos lineares, generalizados, árvores de decisão e
+support vector machines). Na aplicações das técnicas de classificação
+observou-se resultados muito bons no que tange a predição, isso se deve
+ao fato do conjunto de dados em estudo apresentar covariáveis mensuradas
+que favoreceram a classificação.
+
+Mesmo com todos os classificadores apresentando bons resultados de
+classificação pode-se compará-los através de resumos da curva ROC e dos
+resultados da validação cruzada e nessa comparação foram verificados
+melhores desempenhos dos classificadores baseados em árvores de decisão.
+
+\pagebreak
 
 # Referências #
 
 \small
-
-
-```{r, include = FALSE, eval = FALSE}
-
-rmarkdown::render("work-master.Rmd")
-
-```
