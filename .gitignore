@@ -7,6 +7,12 @@
 *.tex
 *.vrb
 !_*.tex
+*.aux
+*.log
+*.out
+*.toc
 
 ## Emacs
 .#*
+
+*.Rhistory
