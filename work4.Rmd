@@ -1,6 +1,17 @@
-% Machine Learning - Cross Validation e Bootstrap
-% Eduardo E. R. Junior - DEST/UFPR
-% `r format(Sys.time(), "%d de %B de %Y")`
+---
+title: "Machine Learning - Cross Validation e Bootstrap"
+author: "Eduardo E. R. Junior - DEST/UFPR"
+date: "22 de abril de 2016"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    css: style.css
+    highlight: pygments
+    code_folding: show
+---
 
 ```{r, include = FALSE}
 source("_defs.R")

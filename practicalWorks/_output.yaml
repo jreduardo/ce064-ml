@@ -1,8 +1,0 @@
-html_document:
-  toc: true
-  toc_float:
-    collapsed: false
-    smooth_scroll: false
-  css: style.css
-  highlight: pygments
-  code_folding: show
