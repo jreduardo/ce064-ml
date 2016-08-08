@@ -1,7 +1,5 @@
 ## Rnw/Rmd output files
 **/*_cache/*
-**/*_files/*
-**/figure/*
 *.nav
 *.snm
 *.tex
