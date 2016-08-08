@@ -1,0 +1,35 @@
+name: "shiny"
+output_dir: "."
+exclude: ["README.md", "LICENSE", "work-master.Rmd"]
+output:
+  html_document:
+    theme: yeti
+    highlight: tango
+    css: _style-pages.css
+navbar:
+  left:
+    - text: Home
+      href: index.html
+    - text: Trabalhos práticos
+      menu:
+      - text: "Regressão Linear"
+        href: work1.html
+      - text: "Gradiente Descentente"
+        href: work2.html
+      - text: "Regularização: Penalização Ridge e Lasso"
+        href: work3.html
+      - text: "Cross Validation e Bootstrap"
+        href: work4.html
+      - text: "Métodos de Classificação Supervisionados"
+        href: work5.html
+      - text: "Support Vector Machine"
+        href: work6.html
+      - text: "Text and Image Mining"
+        href: work8.html
+    - text: Trabalho final
+      href: work-master.pdf
+  right:
+    - text: Eduardo Jr's website
+      href: https://jreduardo.github.io/
+    - icon: fa-github-alt fa-lg
+      href: https://github.com/JrEduardo/ce064-ml

@@ -1,0 +1,57 @@
+---
+title: "Introdução ao Machine Learning"
+subtitle: "Disciplina CE064 da graduação em Estatística UFPR"
+output: html_document
+---
+
+Página dedicada ao armazenamento e disponibilização dos materiais
+elaborados na disciplina
+[CE064 - Introdução ao Machine Learning][ce064], ofertada pelo
+departamento de Estatística na Universidade Federal do Paraná como
+disciplina optativa, ministrada pelo professor
+[Eduardo Ferreira][eferreira].
+
+Na disciplina seguimos o livro-texto
+[An Introduction to Statistical Learning][livro] dos autores James, G.,
+Witten, D., Hastie, T. e Tibshirani, cujo tem soluções (não oficiais)
+dos execícios disponibilizadas por [Amir Sadoughi][amir] em seu
+[blog do GitHub][solutions]. As aulas foram divididas em aulas teóricas,
+ministradas pelo professor, e práticas, ministradas por grupos de
+alunos, sendo que nas práticas um exercício é proposto para o restante
+da turma. Além dos trabalhos propostos nas aulas práticas a disciplina
+também exigiu a elaboração de um trabalho final, em que diferentes
+métodos de predição foram aplicados e comparados.
+
+Os arquivos elaborados durante a disciplina estão disponíveis nos links
+abaixo (trabalhos práticos em html e trabalho final em pdf):
+
+Trabalhos práticos:
+
+```{r, results="asis", echo = FALSE}
+
+titles <- c("Regressão Linear",
+            "Gradiente Descentente",
+            "Regularização: Penalização Ridge e Lasso",
+            "Cross Validation e Bootstrap",
+            "Métodos de Classificação Supervisionados",
+            "Support Vector Machine",
+            "Text and Image Mining")
+files <- grep("^work[0-9]+.html$", dir(), value = TRUE)
+
+cat(paste0(" * ",
+           paste0("[", titles, "]"),
+           paste0("(./", files, ")")),
+    sep = "\n")
+
+```
+
+Trabalho final:
+
+* [Estratégias para Classificação Binária](./work-master.pdf)
+
+<!--------------------------------------------- -->
+[ce064]: http://www.leg.ufpr.br/doku.php/pessoais:e.ferreira:ce064
+[eferreira]: http://www.leg.ufpr.br/doku.php/pessoais:e.ferreira
+[livro]: http://www.springer.com/us/book/9781461471370
+[amir]: http://princehonest.com/
+[solutions]: http://blog.princehonest.com/stat-learning/
