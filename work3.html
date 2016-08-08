@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Eduardo E. R. Junior - DEST/UFPR" />
+
+
+<title>Machine Learning - Regularização: Penalização Ridge e Lasso</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<link href="site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+div.sourceCode {
+  overflow-x: visible;
+}
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 45px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+
+.section h2 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h3 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h4 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h5 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h6 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+<script src="site_libs/navigation-1.0/codefolding.js"></script>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Trabalhos práticos
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="work1.html">Regressão Linear</a>
+    </li>
+    <li>
+      <a href="work2.html">Gradiente Descentente</a>
+    </li>
+    <li>
+      <a href="work3.html">Regularização: Penalização Ridge e Lasso</a>
+    </li>
+    <li>
+      <a href="work4.html">Cross Validation e Bootstrap</a>
+    </li>
+    <li>
+      <a href="work5.html">Métodos de Classificação Supervisionados</a>
+    </li>
+    <li>
+      <a href="work6.html">Support Vector Machine</a>
+    </li>
+    <li>
+      <a href="work8.html">Text and Image Mining</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="work-master.pdf">Trabalho final</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://jreduardo.github.io/">Eduardo Jr's website</a>
+</li>
+<li>
+  <a href="https://github.com/JrEduardo/ce064-ml">
+    <span class="fa fa-github-alt fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All</a></li>
+</ul>
+</div>
+
+
+<h1 class="title toc-ignore">Machine Learning - Regularização: Penalização Ridge e Lasso</h1>
+<h4 class="author"><em>Eduardo E. R. Junior - DEST/UFPR</em></h4>
+<h4 class="date"><em>09 de abril de 2016</em></h4>
+
+</div>
+
+
+<div id="regularizacao" class="section level1">
+<h1>Regularização</h1>
+<p>Neste trabalho prático será aplicado o método <strong>Regularização</strong>, onde penalizamos o algoritmo de estimação dos betas (a função custo) mantendo, assim, as estimativas dos parâmetros próximas a zero ou nulas.</p>
+<p>Existem várias definições de como regularizar os parâmetros a serem estimados ou penalizar a função custo, em geral, eles se diferem na forma de imposição deste custo. O caso mais comumente utilizado é penalizar o algoritmo de estimação da seguinte forma:</p>
+<p><span class="math display">\[
+\underset{\underline{\beta}}{min} \frac{1}{2n}\sum_{i = 1}^n (y_i -
+X\beta)^2 + \lambda \{ (1 - \alpha) ||\beta||_2^2/2 + \alpha ||\beta||_1
+\}
+\]</span></p>
+<p>onde o <strong>penalty</strong> é dado por <span class="math inline">\(\lambda \{ (1 - \alpha) ||\beta||_2^2/2 + \alpha ||\beta||_1 \}\)</span>. Neste trabalho o foco será na regularização por penalização <strong>Ridge</strong>, onde <span class="math inline">\(\alpha\)</span> é igual a 0 e na regularização por penalização <strong>Lasso</strong>, onde <span class="math inline">\(\alpha\)</span> é igual a 1. Em ambos os casos quanto maior o valor de <span class="math inline">\(\beta\)</span> maior será sua penalização, ainda se tomarmos <span class="math inline">\(0 \leq \alpha \leq 1\)</span> temos uma mescla das abordagens Ridge e Lasso (chamada de <strong>Elastic-Net</strong>). Quanto ao multiplicador <span class="math inline">\(\lambda\)</span> far-se-á um estudo sobre seu impacto na estimativas dos parâmetros.</p>
+<p>Felizmente temos a implementação do algoritmo de <strong>Regularização</strong>, da forma como apresentada, no <em>software</em> estatístico R. O método computacional esta disponível na biblioteca [<code>glmnet</code>], provida pela empresa <a href="http://revolutionanalytics.com/">Revolution Analytics</a>, onde temos métodos para ajuste de modelos lineares generalizados, modelos de sobrevivência, entre outros sob penalizações definidas pelo usuário.</p>
+<div id="conjunto-de-dados" class="section level2">
+<h2>Conjunto de dados</h2>
+<p>Os dados considerados para aplicação do método é denominado por <code>longley</code>, disponível no pacote <code>datasets</code>. Este conjunto de dados refere-se a um estudo de macroeconomia onde temos 7 variáveis avaliadas em 16 anos consecutivos, de 1947 a 1962.</p>
+<p>No R o conjunto de dados tem estrutura conforme <em>output</em> abaixo:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">str</span>(longley)</code></pre></div>
+<pre><code>## &#39;data.frame&#39;:    16 obs. of  7 variables:
+##  $ GNP.deflator: num  83 88.5 88.2 89.5 96.2 ...
+##  $ GNP         : num  234 259 258 285 329 ...
+##  $ Unemployed  : num  236 232 368 335 210 ...
+##  $ Armed.Forces: num  159 146 162 165 310 ...
+##  $ Population  : num  108 109 110 111 112 ...
+##  $ Year        : int  1947 1948 1949 1950 1951 1952 1953 1954 1955 1956 ...
+##  $ Employed    : num  60.3 61.1 60.2 61.2 63.2 ...</code></pre>
+<p>O modelo considerado aqui será o modelo gaussiano considerando <code>Employed</code> como variável de interesse e todas as demais como explicativas. Conforme Abaixo</p>
+<p><span class="math display">\[
+Employed \mid X \sim Normal(\hat{\mu}, \hat{\sigma}^2) \\
+ \hat{\mu} = X\underline{\beta}
+\]</span></p>
+<p>onde a matriz X compreende todas as 6 variáveis explicativas e portanto tem dimensão 16x7 (6 <span class="math inline">\(\beta\)</span>’s associados as covariáveis e intercepto <span class="math inline">\(\beta_0\)</span>). Portanto para o modelo descrito serão estimados 8 parâmetros (7 de regressão e o <code>\sigma^2</code>).</p>
+<p>Abaixo ajustamos os modelos:</p>
+<ul>
+<li><code>m0lm</code>: Modelo gaussiano de regressão múltipla;</li>
+<li><code>m0ridge</code>: Modelo gaussiano de regressão múltipla com penalização Ridge;</li>
+<li><code>m0lasso</code>: Modelo gaussiano de regressão múltipla com penalização Lasso; e</li>
+<li><code>m0elnet</code>: Modelo gaussiano de regressão múltipla com penalização dada por <span class="math inline">\(\alpha = 0.5\)</span></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+## Preditor adotado
+preditor &lt;-<span class="st"> </span>Employed ~<span class="st"> </span>.
+data &lt;-<span class="st"> </span>longley
+
+##-------------------------------------------
+## Via LM (Linear Models)
+m0lm &lt;-<span class="st"> </span><span class="kw">lm</span>(preditor, <span class="dt">data =</span> data)
+
+##-------------------------------------------
+## Via Reguralização
+<span class="kw">library</span>(glmnet)
+
+## É ncessário informar as matrizes X e y
+X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(preditor, <span class="dt">data =</span> data)
+y &lt;-<span class="st"> </span>longley$Employed
+
+## Regularização Ridge
+m0ridge &lt;-<span class="st"> </span><span class="kw">cv.glmnet</span>(<span class="dt">x =</span> X, <span class="dt">y =</span> y, <span class="dt">family =</span> <span class="st">&quot;gaussian&quot;</span>, <span class="dt">alpha =</span> <span class="dv">0</span>,
+                     <span class="dt">grouped =</span> <span class="ot">FALSE</span>)
+
+## Regularização Ridge
+m0lasso &lt;-<span class="st"> </span><span class="kw">cv.glmnet</span>(<span class="dt">x =</span> X, <span class="dt">y =</span> y, <span class="dt">family =</span> <span class="st">&quot;gaussian&quot;</span>, <span class="dt">alpha =</span> <span class="dv">1</span>,
+                     <span class="dt">grouped =</span> <span class="ot">FALSE</span>)
+
+## Regularização Elastic Net (com alpha = 0.5)
+m0elnet &lt;-<span class="st"> </span><span class="kw">cv.glmnet</span>(<span class="dt">x =</span> X, <span class="dt">y =</span> y, <span class="dt">family =</span> <span class="st">&quot;gaussian&quot;</span>, <span class="dt">alpha =</span> <span class="fl">0.5</span>,
+                     <span class="dt">grouped =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<p>Os objetos <code>m0ridge</code>, <code>m0lasso</code> e <code>m0net</code> tem classe <code>cv.glmnet</code> e para estas classes o pacote dispõe de vários métodos. Utilizaremos alguns deles para verificar o ajuste do modelos modelos. Note que utilzamos a função <code>cv.glmnet</code> o <code>cv</code> vem das iniciais <em>Cross Validation</em>, utilizando esta função o próprio algoritmo programada já sugere a melhor opção para <span class="math inline">\(\lambda\)</span> a ser utilizada, segundo o critério implementado (Erro quadrático médio da validação cruzada).</p>
+</div>
+<div id="escolhendo-a-penalizacao-adequada" class="section level2">
+<h2>Escolhendo a penalização adequada</h2>
+<p>Essas funções de estimação providas no pacote <code>glmnet</code> ajustam, por padrão, modelos com diferentes <span class="math inline">\(\lambda\)</span>’s na penalização. É utilizado uma sequência de 100 valores escolhidos com base na escala da variável resposta e no método utilizado ($). Nos objetos de classe <code>cv.glmnet</code> temos a função <code>plot</code> que apresenta o critério utilizado para escolha do <span class="math inline">\(\lambda\)</span>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>))
+<span class="kw">plot</span>(m0ridge); <span class="kw">title</span>(<span class="st">&quot;Ridge&quot;</span>, <span class="dt">line =</span> <span class="fl">2.5</span>)
+<span class="kw">plot</span>(m0lasso); <span class="kw">title</span>(<span class="st">&quot;Lasso&quot;</span>, <span class="dt">line =</span> <span class="fl">2.5</span>)
+<span class="kw">plot</span>(m0elnet); <span class="kw">title</span>(<span class="st">&quot;alpha = 0.5&quot;</span>, <span class="dt">line =</span> <span class="fl">2.5</span>)</code></pre></div>
+<p><img src="work3_files/figure-html/unnamed-chunk-5-1.png" title="" alt="" width="960" style="display: block; margin: auto;" /></p>
+<p>Com base nestes gráficos nota-se que o valor de <span class="math inline">\(\lambda\)</span> sugerido, que minimiza o erro de validação cruzada é 0,3671, 0,0041, 0,0082 para os modelos com penalização Ridge, Lasso, e Elastic Net (<span class="math inline">\(\lambda = 0.5\)</span>), ainda é apresentado (segunda linha vertical) o maior valor de <span class="math inline">\(\lambda\)</span> que está no intervalo de um erro padrão do erro quadrático médio de validação que resultou nos valores 0,6414, 0,022, 0,0401.</p>
+</div>
+<div id="comparacao-de-ajustes" class="section level2">
+<h2>Comparação de ajustes</h2>
+<p>Abaixo como comparação apresentamos os parâmetros estimados em ambos os métodos.</p>
+<p>Primeiro apresentamos abaixo a comparação dos coeficientes estimados utilizando o <span class="math inline">\(\lambda\)</span> que minimiza o erro de validação cruzada e o <span class="math inline">\(\lambda\)</span> máximo pertencente ao intervalo de um erro padrão do erro de validação cruzada.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## cbind(coef(m0lm), coef(m0ridge), coef(m0lasso), coef(m0elnet))
+
+coefRidge &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="st">&quot;RIDGE-MIN&quot;</span> =<span class="st"> </span><span class="kw">coef</span>(m0ridge, <span class="dt">s =</span> <span class="st">&quot;lambda.min&quot;</span>)[-<span class="dv">2</span>],
+                   <span class="st">&quot;RIDGE-1SE&quot;</span> =<span class="st"> </span><span class="kw">coef</span>(m0ridge, <span class="dt">s =</span> <span class="st">&quot;lambda.1se&quot;</span>)[-<span class="dv">2</span>])
+coefLasso &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="st">&quot;LASSO-MIN&quot;</span> =<span class="st"> </span><span class="kw">coef</span>(m0lasso, <span class="dt">s =</span> <span class="st">&quot;lambda.min&quot;</span>)[-<span class="dv">2</span>],
+                   <span class="st">&quot;LASSO-1SE&quot;</span> =<span class="st"> </span><span class="kw">coef</span>(m0lasso, <span class="dt">s =</span> <span class="st">&quot;lambda.1se&quot;</span>)[-<span class="dv">2</span>])
+coefElnet &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="st">&quot;ELNET-MIN&quot;</span> =<span class="st"> </span><span class="kw">coef</span>(m0elnet, <span class="dt">s =</span> <span class="st">&quot;lambda.min&quot;</span>)[-<span class="dv">2</span>],
+                   <span class="st">&quot;ELNET-1SE&quot;</span> =<span class="st"> </span><span class="kw">coef</span>(m0elnet, <span class="dt">s =</span> <span class="st">&quot;lambda.1se&quot;</span>)[-<span class="dv">2</span>])
+
+compareCoefs &lt;-<span class="st"> </span><span class="kw">cbind</span>(coefRidge, coefLasso, coefElnet)
+<span class="kw">rownames</span>(compareCoefs) &lt;-<span class="st"> </span><span class="kw">coef</span>(m0elnet)@Dimnames[[<span class="dv">1</span>]][-<span class="dv">2</span>]
+
+knitr::<span class="kw">kable</span>(compareCoefs, <span class="dt">align =</span> <span class="kw">rep</span>(<span class="st">&quot;c&quot;</span>, <span class="dv">6</span>), <span class="dt">digits =</span> <span class="dv">3</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">RIDGE-MIN</th>
+<th align="center">RIDGE-1SE</th>
+<th align="center">LASSO-MIN</th>
+<th align="center">LASSO-1SE</th>
+<th align="center">ELNET-MIN</th>
+<th align="center">ELNET-1SE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="center">-363.081</td>
+<td align="center">-324.641</td>
+<td align="center">-1965.218</td>
+<td align="center">-1688.492</td>
+<td align="center">-1640.815</td>
+<td align="center">-761.290</td>
+</tr>
+<tr class="even">
+<td align="left">GNP.deflator</td>
+<td align="center">0.083</td>
+<td align="center">0.079</td>
+<td align="center">0.000</td>
+<td align="center">0.000</td>
+<td align="center">0.025</td>
+<td align="center">0.046</td>
+</tr>
+<tr class="odd">
+<td align="left">GNP</td>
+<td align="center">0.011</td>
+<td align="center">0.010</td>
+<td align="center">0.000</td>
+<td align="center">0.001</td>
+<td align="center">0.000</td>
+<td align="center">0.016</td>
+</tr>
+<tr class="even">
+<td align="left">Unemployed</td>
+<td align="center">-0.007</td>
+<td align="center">-0.005</td>
+<td align="center">-0.014</td>
+<td align="center">-0.013</td>
+<td align="center">-0.014</td>
+<td align="center">-0.010</td>
+</tr>
+<tr class="odd">
+<td align="left">Armed.Forces</td>
+<td align="center">-0.001</td>
+<td align="center">0.000</td>
+<td align="center">-0.008</td>
+<td align="center">-0.006</td>
+<td align="center">-0.007</td>
+<td align="center">-0.005</td>
+</tr>
+<tr class="even">
+<td align="left">Population</td>
+<td align="center">0.120</td>
+<td align="center">0.117</td>
+<td align="center">-0.065</td>
+<td align="center">0.000</td>
+<td align="center">0.000</td>
+<td align="center">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">Year</td>
+<td align="center">0.207</td>
+<td align="center">0.187</td>
+<td align="center">1.046</td>
+<td align="center">0.900</td>
+<td align="center">0.875</td>
+<td align="center">0.419</td>
+</tr>
+</tbody>
+</table>
+<p>Note na tabela que os valores, primeiramente olhando as colunas duas a duas (se foi pego o <span class="math inline">\(\lambda\)</span> mínimo - <strong>-MIN</strong> ou o maior dentro do intervalo de 1 erro padrão - <strong>-1SE</strong>), dentre essas duas alternativas não vemos uma diferença muito discrepante das estimativas, porém perceba que sempre em <strong>-1SE</strong> temos uma estimativa mais próxima de zero do que a fornecida por <strong>-MIN</strong>, pois nestes casos a penalização é maior. Escolheremos o maior <span class="math inline">\(\lambda\)</span>, pois desejamos uma maior penalização. Agora comparando entre procedimentos de penalização <strong>RIDGE</strong>, <strong>LASSO</strong> e <strong>ELNET</strong> (com <span class="math inline">\(\lambda\)</span> = 0,5) notamos maior diferença nas estimativas, note que no caso <strong>RIDGE</strong> as estimativas chegam próxima a zero, porém não são nulas, já nos casos <strong>LASSO</strong> e <strong>ELNET</strong> a nulidade já ocorre para alguns parâmetros.</p>
+<p>Agora vamos a comparação com a tradicional metodologia já amplamente utilizada, a regressão gaussiana múltipla. Abaixo temos a comparação dos coeficientes estimatidas. Apresentamos somente as estimativas com penalização utilizando o maior <span class="math inline">\(\lambda\)</span> sugerido.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">coeflm &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="st">&quot;LM&quot;</span> =<span class="st"> </span><span class="kw">coef</span>(m0lm))
+compareCoefs &lt;-<span class="st"> </span><span class="kw">cbind</span>(coeflm, compareCoefs[, <span class="kw">seq</span>(<span class="dv">2</span>, <span class="dv">6</span>, <span class="dv">2</span>)])
+<span class="kw">colnames</span>(compareCoefs) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;LINEAR&quot;</span>, <span class="st">&quot;RIDGE&quot;</span>, <span class="st">&quot;LASSO&quot;</span>, <span class="st">&quot;ELNET&quot;</span>)
+
+knitr::<span class="kw">kable</span>(compareCoefs, <span class="dt">align =</span> <span class="kw">rep</span>(<span class="st">&quot;c&quot;</span>, <span class="dv">4</span>), <span class="dt">digits =</span> <span class="dv">3</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">LINEAR</th>
+<th align="center">RIDGE</th>
+<th align="center">LASSO</th>
+<th align="center">ELNET</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="center">-3482.259</td>
+<td align="center">-324.641</td>
+<td align="center">-1688.492</td>
+<td align="center">-761.290</td>
+</tr>
+<tr class="even">
+<td align="left">GNP.deflator</td>
+<td align="center">0.015</td>
+<td align="center">0.079</td>
+<td align="center">0.000</td>
+<td align="center">0.046</td>
+</tr>
+<tr class="odd">
+<td align="left">GNP</td>
+<td align="center">-0.036</td>
+<td align="center">0.010</td>
+<td align="center">0.001</td>
+<td align="center">0.016</td>
+</tr>
+<tr class="even">
+<td align="left">Unemployed</td>
+<td align="center">-0.020</td>
+<td align="center">-0.005</td>
+<td align="center">-0.013</td>
+<td align="center">-0.010</td>
+</tr>
+<tr class="odd">
+<td align="left">Armed.Forces</td>
+<td align="center">-0.010</td>
+<td align="center">0.000</td>
+<td align="center">-0.006</td>
+<td align="center">-0.005</td>
+</tr>
+<tr class="even">
+<td align="left">Population</td>
+<td align="center">-0.051</td>
+<td align="center">0.117</td>
+<td align="center">0.000</td>
+<td align="center">0.000</td>
+</tr>
+<tr class="odd">
+<td align="left">Year</td>
+<td align="center">1.829</td>
+<td align="center">0.187</td>
+<td align="center">0.900</td>
+<td align="center">0.419</td>
+</tr>
+</tbody>
+</table>
+<p>Os valores estimados são razoavelmente distintos, porém note que a regressão <strong>LASSO</strong> toma a nulidade do parâmetros relacionados as variáveis <em>GNP.deflator</em>, <em>GNP</em> e <em>Population</em>. Verificando o teste de significância para estes parâmetros no modelo linear gaussiano temos:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## summary(m0lm)
+
+## Para usar kable
+est =<span class="st"> </span><span class="kw">coef</span>(<span class="kw">summary</span>(m0lm))[, <span class="st">&quot;Estimate&quot;</span>]
+sdt =<span class="st"> </span><span class="kw">coef</span>(<span class="kw">summary</span>(m0lm))[, <span class="st">&quot;Std. Error&quot;</span>]
+tval =<span class="st"> </span>est/sdt
+pval =<span class="st"> </span><span class="dv">2</span>*<span class="kw">pt</span>(<span class="kw">abs</span>(tval), <span class="dt">df =</span> m0lm$df.residual, <span class="dt">lower =</span> <span class="ot">FALSE</span>)
+
+mysummary &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="dt">Estimate =</span> est, <span class="dt">Std.Error =</span> sdt,
+                   <span class="st">&quot;t value&quot;</span> =<span class="st"> </span>tval, <span class="st">&quot;P(&gt;|t|)&quot;</span> =<span class="st"> </span>pval)
+
+knitr::<span class="kw">kable</span>(mysummary, <span class="dt">align =</span> <span class="kw">rep</span>(<span class="st">&quot;c&quot;</span>, <span class="dv">4</span>), <span class="dt">digits =</span> <span class="dv">3</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">Estimate</th>
+<th align="center">Std.Error</th>
+<th align="center">t value</th>
+<th align="center">P(&gt;|t|)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="center">-3482.259</td>
+<td align="center">890.420</td>
+<td align="center">-3.911</td>
+<td align="center">0.004</td>
+</tr>
+<tr class="even">
+<td align="left">GNP.deflator</td>
+<td align="center">0.015</td>
+<td align="center">0.085</td>
+<td align="center">0.177</td>
+<td align="center">0.863</td>
+</tr>
+<tr class="odd">
+<td align="left">GNP</td>
+<td align="center">-0.036</td>
+<td align="center">0.033</td>
+<td align="center">-1.070</td>
+<td align="center">0.313</td>
+</tr>
+<tr class="even">
+<td align="left">Unemployed</td>
+<td align="center">-0.020</td>
+<td align="center">0.005</td>
+<td align="center">-4.136</td>
+<td align="center">0.003</td>
+</tr>
+<tr class="odd">
+<td align="left">Armed.Forces</td>
+<td align="center">-0.010</td>
+<td align="center">0.002</td>
+<td align="center">-4.822</td>
+<td align="center">0.001</td>
+</tr>
+<tr class="even">
+<td align="left">Population</td>
+<td align="center">-0.051</td>
+<td align="center">0.226</td>
+<td align="center">-0.226</td>
+<td align="center">0.826</td>
+</tr>
+<tr class="odd">
+<td align="left">Year</td>
+<td align="center">1.829</td>
+<td align="center">0.455</td>
+<td align="center">4.016</td>
+<td align="center">0.003</td>
+</tr>
+</tbody>
+</table>
+<p>Portanto, nota-se que a regressão por penalização <strong>LASSO</strong> fez, neste caso, o trabalho manual que seria de retirar estas as variáveis do modelo e reajustá-lo.</p>
+</div>
+</div>
+<div id="informacoes-da-sessao-r" class="section level1">
+<h1>Informações da sessão R</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">format</span>(<span class="kw">Sys.time</span>(),
+           <span class="dt">format =</span> <span class="st">&quot;Atualizado em %d de %B de %Y.</span><span class="ch">\n\n</span><span class="st">&quot;</span>))</code></pre></div>
+<pre><code>## Atualizado em 08 de agosto de 2016.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()</code></pre></div>
+<pre><code>## R version 3.3.1 (2016-06-21)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.5 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=pt_BR.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=pt_BR.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=pt_BR.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=pt_BR.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] parallel  stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+## [1] glmnet_2.0-5        foreach_1.4.3       Matrix_1.2-6       
+## [4] mboost_2.6-0        stabs_0.5-1         knitr_1.12.3       
+## [7] latticeExtra_0.6-28 RColorBrewer_1.1-2  lattice_0.20-33    
+## 
+## loaded via a namespace (and not attached):
+##  [1] magrittr_1.5      MASS_7.3-45       splines_3.3.1    
+##  [4] nnls_1.4          quadprog_1.5-5    multcomp_1.4-5   
+##  [7] highr_0.5.1       stringr_1.0.0     tools_3.3.1      
+## [10] grid_3.3.1        TH.data_1.0-7     iterators_1.0.8  
+## [13] modeltools_0.2-21 htmltools_0.3     yaml_2.1.13      
+## [16] survival_2.39-4   digest_0.6.9      party_1.0-25     
+## [19] formatR_1.3       codetools_0.2-14  strucchange_1.5-1
+## [22] evaluate_0.9      rmarkdown_0.9.6   coin_1.1-2       
+## [25] sandwich_2.3-4    stringi_1.0-1     compiler_3.3.1   
+## [28] stats4_3.3.1      mvtnorm_1.0-5     zoo_1.7-13</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

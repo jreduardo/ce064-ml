@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Eduardo E. R. Junior - DEST/UFPR" />
+
+
+<title>Machine Learning - Gradiente Descentente</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<link href="site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+div.sourceCode {
+  overflow-x: visible;
+}
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 45px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+
+.section h2 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h3 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h4 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h5 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h6 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+<script src="site_libs/navigation-1.0/codefolding.js"></script>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Trabalhos práticos
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="work1.html">Regressão Linear</a>
+    </li>
+    <li>
+      <a href="work2.html">Gradiente Descentente</a>
+    </li>
+    <li>
+      <a href="work3.html">Regularização: Penalização Ridge e Lasso</a>
+    </li>
+    <li>
+      <a href="work4.html">Cross Validation e Bootstrap</a>
+    </li>
+    <li>
+      <a href="work5.html">Métodos de Classificação Supervisionados</a>
+    </li>
+    <li>
+      <a href="work6.html">Support Vector Machine</a>
+    </li>
+    <li>
+      <a href="work8.html">Text and Image Mining</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="work-master.pdf">Trabalho final</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://jreduardo.github.io/">Eduardo Jr's website</a>
+</li>
+<li>
+  <a href="https://github.com/JrEduardo/ce064-ml">
+    <span class="fa fa-github-alt fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All</a></li>
+</ul>
+</div>
+
+
+<h1 class="title toc-ignore">Machine Learning - Gradiente Descentente</h1>
+<h4 class="author"><em>Eduardo E. R. Junior - DEST/UFPR</em></h4>
+<h4 class="date"><em>30 de março de 2016</em></h4>
+
+</div>
+
+
+<div id="gradiente-descendente" class="section level1">
+<h1>Gradiente Descendente</h1>
+<p>Neste trabalho prático será aplicado o método <strong>Gradiente Descendente</strong>, utilizado para maximizar ou minizar função, no contexto do problema estatístico de minimização de uma função custo.</p>
+<p>Nosso enfoque será no algoritmo <strong>Gradiente Descendente Boosting</strong>, onde a minimizamos uma função custo definida e, a cada iteração do algoritmo, os parâmetros do modelo proposto, decorrente da função custo, são atualizados via o negativo do gradiente.</p>
+<p>Felizmente temos a implementação do algoritmo <strong>Gradiente Descendente Boosting</strong> no <em>software</em> estatístico R. O método computacional esta disonível na biblioteca [<code>mboost</code>], cujo autor também generaliza o método para ajuste de modelos lineares generalizados, regressão quantílica, modelos de sobrevivência, entre outros.</p>
+<div id="conjunto-de-dados" class="section level2">
+<h2>Conjunto de dados</h2>
+<p>Os dados considerados para aplicação do método é denominado por <code>infert</code>, disponível no pacote <code>datasets</code>. Este conjunto de dados refere-se a um estudo de caso-controle pareado sobre infertilidade após o aborto espontâneo ou induzido. O conjunto possui 8 colunas e 248 observações. As duas últimas colunas do conjunto de dados podem ser descartadas para análise, pois são de identificação. Com isso dispomos das variáveis <em>education</em> (0-5 anos, 6-11 anos ou &gt;12 anos), <em>age</em> (idade em anos), <em>parity</em> (contagem), <em>induced</em> (0, 1, &gt;2 abortos induzidos), <em>spontaneous</em> (0, 1, &gt;2 abortos espontâneos) e <em>case</em> (caso ou controle). A documentação dos dados sugere o ajuste do modelo:</p>
+<p><span class="math display">\[
+case \mid X \sim Binomial(\hat{\pi}) \\
+logit (\hat{\pi}) = X\underline{\beta}
+\]</span></p>
+<p>onde na matriz X estão todas as variáveis <em>dummy</em> derivadas das variáveis originais descritas acima. Os modelos são ajustados no software R da seguinte forma:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+## Preditor adotado
+preditor &lt;-<span class="st"> </span>case ~<span class="st"> </span>age +<span class="st"> </span>parity +<span class="st"> </span>education +<span class="st"> </span>spontaneous +<span class="st"> </span>induced
+data &lt;-<span class="st"> </span>infert
+
+##-------------------------------------------
+## Via GLM
+m0glm &lt;-<span class="st"> </span><span class="kw">glm</span>(preditor, <span class="dt">data =</span> data, <span class="dt">family =</span> binomial)
+
+##-------------------------------------------
+## Via Bootstrap Boosting
+<span class="kw">library</span>(mboost)
+m0boost &lt;-<span class="st"> </span><span class="kw">glmboost</span>(preditor, <span class="dt">data =</span> data,
+                    <span class="dt">family =</span> <span class="kw">Binomial</span>(<span class="dt">link =</span> <span class="st">&quot;logit&quot;</span>),
+                    <span class="dt">control =</span> <span class="kw">boost_control</span>(<span class="dt">mstop =</span> <span class="dv">500</span>),
+                    <span class="dt">center =</span> T)</code></pre></div>
+<p>O objeto <code>m0boost</code> no R tem classe <code>glmboost</code> e <code>mboost</code> e para estas classes o pacote dispõe de vários métodos. Utilizaremos alguns deles para verificar o ajuste do modelo GLM via gradiente descendente <em>boosting</em> na próxima seção.</p>
+</div>
+<div id="verificando-convergencia" class="section level2">
+<h2>Verificando convergência</h2>
+<p>A primeira forma para verificar a convergência do método é avaliar as cadeias de valores gerados para estimativa dos parâmetros.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Verificando convergência dos parâmetros
+<span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">5</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">7</span>) +<span class="st"> </span><span class="fl">0.1</span>)
+<span class="kw">plot</span>(m0boost, <span class="dt">off2int =</span> <span class="ot">TRUE</span>, <span class="dt">lwd =</span> <span class="dv">3</span>, <span class="dt">main =</span> <span class="st">&quot;&quot;</span>)</code></pre></div>
+<p><img src="work2_files/figure-html/unnamed-chunk-4-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p>No gráfico são exibidas os valores de cada iteração dos 9 parâmetros do modelo. Note utilizando o algoritmo com <code>mstop</code> (nº de iterações) igual a 100 e com “passo”x <code>nu</code> igual 0.1 (padrão da função) o ajuste não foi não foi satisfatório para o problema, as cadeias não “estacionaram” em um valor. Para efeitos didáticos continuaremos com esta configuração.</p>
+<p>Uma outra forma para verificar a convergência é avaliando a estabilidade da função custo. Neste problema o Critério de Informação de Akaike é proporcional a função custo, abaixo temos a avaliação do critério de Akaike para cada iteração.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Verificando convergência do AIC (função da função custo adotada)
+<span class="kw">layout</span>(<span class="dv">1</span>)
+aic &lt;-<span class="st"> </span><span class="kw">AIC</span>(m0boost, <span class="dt">method =</span> <span class="st">&quot;classical&quot;</span>)
+<span class="kw">plot</span>(aic, <span class="dt">lwd =</span> <span class="dv">3</span>)
+<span class="kw">grid</span>()</code></pre></div>
+<p><img src="work2_files/figure-html/unnamed-chunk-5-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p>Note que, em corcordância com o obervado no gráfico dos valores estimados para cada parâmetro em cada iteração, não temos uma convergência do AIC com 500 iterações.</p>
+</div>
+<div id="comparacao-glm-vs-boost" class="section level2">
+<h2>Comparação GLM vs Boost</h2>
+<p>Abaixo como comparação apresentamos os parâmetros estimados em ambos os métodos.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">compareCoefs &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="st">&quot;GLM&quot;</span> =<span class="st"> </span><span class="kw">coef</span>(m0glm),
+                      <span class="st">&quot;Boost&quot;</span> =<span class="st"> </span><span class="kw">c</span>(
+                          <span class="kw">coef</span>(m0boost)[<span class="dv">1</span>] +<span class="st"> </span><span class="kw">attr</span>(<span class="kw">coef</span>(m0boost), <span class="st">&quot;offset&quot;</span>),
+                          <span class="kw">coef</span>(m0boost)[-<span class="dv">1</span>])*<span class="dv">2</span>
+                      )
+
+knitr::<span class="kw">kable</span>(compareCoefs, <span class="dt">align =</span> <span class="kw">c</span>(<span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>), <span class="dt">digits =</span> <span class="dv">4</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">GLM</th>
+<th align="center">Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="center">-1.1307</td>
+<td align="center">-1.8097</td>
+</tr>
+<tr class="even">
+<td align="left">age</td>
+<td align="center">0.0393</td>
+<td align="center">0.0311</td>
+</tr>
+<tr class="odd">
+<td align="left">parity</td>
+<td align="center">-0.8301</td>
+<td align="center">-0.5985</td>
+</tr>
+<tr class="even">
+<td align="left">education6-11yrs</td>
+<td align="center">-1.0394</td>
+<td align="center">-0.0975</td>
+</tr>
+<tr class="odd">
+<td align="left">education12+ yrs</td>
+<td align="center">-1.3975</td>
+<td align="center">-0.3682</td>
+</tr>
+<tr class="even">
+<td align="left">spontaneous1</td>
+<td align="center">2.0310</td>
+<td align="center">1.6517</td>
+</tr>
+<tr class="odd">
+<td align="left">spontaneous2</td>
+<td align="center">4.0988</td>
+<td align="center">3.4168</td>
+</tr>
+<tr class="even">
+<td align="left">induced1</td>
+<td align="center">1.2590</td>
+<td align="center">0.9004</td>
+</tr>
+<tr class="odd">
+<td align="left">induced2</td>
+<td align="center">2.5921</td>
+<td align="center">1.9677</td>
+</tr>
+</tbody>
+</table>
+<p>Note que os parâmetros estimados tiveram uma notável diferença (os ajustes de <em>ofsset</em> e escala adotados pela função <code>glmboost</code> já foram considerados, os valores estão na mesma escala) isso se deve a má calibração do algoritmo como já comentado.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">compareCost =<span class="st"> </span><span class="kw">rbind</span>(<span class="st">&quot;**AIC**&quot;</span> =<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;GLM&quot;</span> =<span class="st"> </span><span class="kw">AIC</span>(m0glm), <span class="st">&quot;Boost&quot;</span> =<span class="st"> </span>aic),
+                    <span class="st">&quot;**logLik**&quot;</span> =<span class="st"> </span><span class="kw">c</span>(<span class="kw">logLik</span>(m0glm), <span class="kw">logLik</span>(m0boost))
+                    )
+
+knitr::<span class="kw">kable</span>(compareCost, <span class="dt">align =</span> <span class="kw">c</span>(<span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>), <span class="dt">digits =</span> <span class="dv">4</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">GLM</th>
+<th align="center">Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><strong>AIC</strong></td>
+<td align="center">275.7848</td>
+<td align="center">275.0398</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>logLik</strong></td>
+<td align="center">-128.8924</td>
+<td align="center">-130.2292</td>
+</tr>
+</tbody>
+</table>
+<p>De forma similar para as medidas de custo calculadas também observamos a diferença. Não tão acentuada quanto nos parâmetros, mas ainda assim significativa.</p>
+<p>Como o foco em <em>Machine Learning</em> não é inferência e sim predição, abaixo é apresentado o gráfico dos valores preditos para o modelo GLM estimado via IWLS (<em>Interative Weighted Least Squares</em>) e via Gradiente Descendente <em>Boosting</em>. Claro que são apenas as predições para o próprio conjunto de ajuste, porém como isso ocorre para ambos os modelos a comparação é justa.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pred &lt;-<span class="st"> </span><span class="kw">data.frame</span>(
+    <span class="st">&quot;GLM&quot;</span> =<span class="st"> </span><span class="kw">predict</span>(m0glm, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>),
+    <span class="st">&quot;Boost&quot;</span> =<span class="st"> </span><span class="kw">predict</span>(m0boost, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>))
+
+<span class="kw">library</span>(lattice)
+<span class="kw">xyplot</span>(GLM ~<span class="st"> </span>Boost, <span class="dt">data =</span> pred, <span class="dt">pch =</span> <span class="dv">19</span>,
+       <span class="dt">type =</span> <span class="kw">c</span>(<span class="st">&quot;p&quot;</span>, <span class="st">&quot;smooth&quot;</span>, <span class="st">&quot;g&quot;</span>),
+       <span class="dt">col =</span> <span class="dv">1</span>, <span class="dt">panel =</span> function(x, y, ...) {
+           <span class="kw">panel.xyplot</span>(x, y, ...)
+           <span class="kw">panel.abline</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dt">col =</span> <span class="dv">4</span>)
+       })</code></pre></div>
+<p><img src="work2_files/figure-html/unnamed-chunk-8-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p>Em média os valores preditos são os mesmos para ambos os modelos ajustados, porém há uma variação devido a má calibração do método.</p>
+</div>
+<div id="calibrando-o-metodo" class="section level2">
+<h2>Calibrando o método</h2>
+<p>Testando várias configurações do método (valores máximos de iteração e valores distintos de <code>nu</code> “passo”) e observando as características do modelo proposto chegamos a configuração abaixo que otimiza a utilização do método.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##-------------------------------------------
+## Via Bootstrap Boosting
+<span class="kw">library</span>(mboost)
+m0boost &lt;-<span class="st"> </span><span class="kw">glmboost</span>(preditor, <span class="dt">data =</span> data,
+                    <span class="dt">family =</span> <span class="kw">Binomial</span>(<span class="dt">link =</span> <span class="st">&quot;logit&quot;</span>),
+                    <span class="dt">control =</span> <span class="kw">boost_control</span>(<span class="dt">mstop =</span> <span class="dv">250</span>, <span class="dt">nu =</span> <span class="dv">1</span>),
+                    <span class="dt">center =</span> T)</code></pre></div>
+<p>E agora recalculando todos os resultados exibidos anteriormente:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Verificando convergência dos parâmetros
+<span class="kw">par</span>(<span class="dt">mar =</span> <span class="kw">c</span>(<span class="dv">5</span>, <span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">7</span>) +<span class="st"> </span><span class="fl">0.1</span>)
+<span class="kw">plot</span>(m0boost, <span class="dt">off2int =</span> <span class="ot">TRUE</span>, <span class="dt">lwd =</span> <span class="dv">3</span>, <span class="dt">main =</span> <span class="st">&quot;&quot;</span>)</code></pre></div>
+<p><img src="work2_files/figure-html/unnamed-chunk-10-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Verificando convergência do AIC (função da função custo adotada)
+<span class="kw">layout</span>(<span class="dv">1</span>)
+aic &lt;-<span class="st"> </span><span class="kw">AIC</span>(m0boost, <span class="dt">method =</span> <span class="st">&quot;classical&quot;</span>)
+<span class="kw">plot</span>(aic, <span class="dt">lwd =</span> <span class="dv">3</span>)
+<span class="kw">grid</span>()</code></pre></div>
+<p><img src="work2_files/figure-html/unnamed-chunk-10-2.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Comparando os coeficientes estimados
+<span class="kw">cbind</span>(<span class="st">&quot;GLM&quot;</span> =<span class="st"> </span><span class="kw">coef</span>(m0glm),
+      <span class="st">&quot;Boost&quot;</span> =<span class="st"> </span><span class="kw">c</span>(<span class="kw">coef</span>(m0boost)[<span class="dv">1</span>] +<span class="st"> </span><span class="kw">attr</span>(<span class="kw">coef</span>(m0boost), <span class="st">&quot;offset&quot;</span>),
+                  <span class="kw">coef</span>(m0boost)[-<span class="dv">1</span>])*<span class="dv">2</span>)</code></pre></div>
+<pre><code>##                          GLM      Boost
+## (Intercept)      -1.13068389 -1.1317909
+## age               0.03929435  0.0392777
+## parity           -0.83011490 -0.8296435
+## education6-11yrs -1.03944775 -1.0376724
+## education12+ yrs -1.39751988 -1.3956732
+## spontaneous1      2.03101321  2.0301672
+## spontaneous2      4.09880583  4.0974352
+## induced1          1.25903175  1.2582527
+## induced2          2.59206400  2.5907822</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">rbind</span>(<span class="st">&quot;**AIC**&quot;</span> =<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;GLM&quot;</span> =<span class="st"> </span><span class="kw">AIC</span>(m0glm), <span class="st">&quot;Boost&quot;</span> =<span class="st"> </span>aic),
+      <span class="st">&quot;**logLik**&quot;</span> =<span class="st"> </span><span class="kw">c</span>(<span class="kw">logLik</span>(m0glm), <span class="kw">logLik</span>(m0boost))
+      )</code></pre></div>
+<pre><code>##                  GLM     Boost
+## **AIC**     275.7848  273.7127
+## **logLik** -128.8924 -128.8924</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Comparando os valores preditos
+pred &lt;-<span class="st"> </span><span class="kw">data.frame</span>(
+    <span class="st">&quot;GLM&quot;</span> =<span class="st"> </span><span class="kw">predict</span>(m0glm, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>),
+    <span class="st">&quot;Boost&quot;</span> =<span class="st"> </span><span class="kw">predict</span>(m0boost, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>))
+
+<span class="kw">library</span>(lattice)
+<span class="kw">xyplot</span>(GLM ~<span class="st"> </span>Boost, <span class="dt">data =</span> pred, <span class="dt">pch =</span> <span class="dv">19</span>,
+       <span class="dt">type =</span> <span class="kw">c</span>(<span class="st">&quot;p&quot;</span>, <span class="st">&quot;smooth&quot;</span>, <span class="st">&quot;g&quot;</span>),
+       <span class="dt">col =</span> <span class="dv">1</span>, <span class="dt">panel =</span> function(x, y, ...) {
+           <span class="kw">panel.xyplot</span>(x, y, ...)
+           <span class="kw">panel.abline</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dt">col =</span> <span class="dv">4</span>)
+       })</code></pre></div>
+<p><img src="work2_files/figure-html/unnamed-chunk-10-3.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p>E assim obtemos a equivalência dos métodos, exemplificando que uma má escolha dos parâmetros do método pode levar a modelos mal estimados. Um estudo posterior ao ajuste se faz sempre necessário.</p>
+</div>
+</div>
+<div id="informacoes-da-sessao-r" class="section level1">
+<h1>Informações da sessão R</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">format</span>(<span class="kw">Sys.time</span>(),
+           <span class="dt">format =</span> <span class="st">&quot;Atualizado em %d de %B de %Y.</span><span class="ch">\n\n</span><span class="st">&quot;</span>))</code></pre></div>
+<pre><code>## Atualizado em 08 de agosto de 2016.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()</code></pre></div>
+<pre><code>## R version 3.3.1 (2016-06-21)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.5 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=pt_BR.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=pt_BR.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=pt_BR.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=pt_BR.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] parallel  stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+## [1] mboost_2.6-0        stabs_0.5-1         knitr_1.12.3       
+## [4] latticeExtra_0.6-28 RColorBrewer_1.1-2  lattice_0.20-33    
+## 
+## loaded via a namespace (and not attached):
+##  [1] magrittr_1.5      MASS_7.3-45       splines_3.3.1    
+##  [4] nnls_1.4          quadprog_1.5-5    multcomp_1.4-5   
+##  [7] highr_0.5.1       stringr_1.0.0     tools_3.3.1      
+## [10] grid_3.3.1        TH.data_1.0-7     modeltools_0.2-21
+## [13] htmltools_0.3     yaml_2.1.13       survival_2.39-4  
+## [16] digest_0.6.9      Matrix_1.2-6      party_1.0-25     
+## [19] formatR_1.3       codetools_0.2-14  strucchange_1.5-1
+## [22] evaluate_0.9      rmarkdown_0.9.6   coin_1.1-2       
+## [25] sandwich_2.3-4    stringi_1.0-1     compiler_3.3.1   
+## [28] stats4_3.3.1      mvtnorm_1.0-5     zoo_1.7-13</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

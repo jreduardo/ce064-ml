@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Eduardo E. R. Junior - DEST/UFPR" />
+
+
+<title>Machine Learning - Regressão Linear</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<link href="site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+div.sourceCode {
+  overflow-x: visible;
+}
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 45px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+
+.section h2 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h3 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h4 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h5 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h6 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+<script src="site_libs/navigation-1.0/codefolding.js"></script>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Trabalhos práticos
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="work1.html">Regressão Linear</a>
+    </li>
+    <li>
+      <a href="work2.html">Gradiente Descentente</a>
+    </li>
+    <li>
+      <a href="work3.html">Regularização: Penalização Ridge e Lasso</a>
+    </li>
+    <li>
+      <a href="work4.html">Cross Validation e Bootstrap</a>
+    </li>
+    <li>
+      <a href="work5.html">Métodos de Classificação Supervisionados</a>
+    </li>
+    <li>
+      <a href="work6.html">Support Vector Machine</a>
+    </li>
+    <li>
+      <a href="work8.html">Text and Image Mining</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="work-master.pdf">Trabalho final</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://jreduardo.github.io/">Eduardo Jr's website</a>
+</li>
+<li>
+  <a href="https://github.com/JrEduardo/ce064-ml">
+    <span class="fa fa-github-alt fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All</a></li>
+</ul>
+</div>
+
+
+<h1 class="title toc-ignore">Machine Learning - Regressão Linear</h1>
+<h4 class="author"><em>Eduardo E. R. Junior - DEST/UFPR</em></h4>
+<h4 class="date"><em>23 de março de 2016</em></h4>
+
+</div>
+
+
+<div id="algoritmo-massive" class="section level1">
+<h1>Algoritmo massive</h1>
+<p>O algoritmo <code>massive</code>, implementado por [Daniel Ikenaga] como atividade proposta na disciplina ?? - Análise de Regressão Linear, tem por objetivo estudar o poder preditivo de modelos de regressão linear simples atráves da estimação massiva de possíveis modelos de regressão linear simples.</p>
+<p>O algoritmo se baseia nas seguintes etapas, a partir de um conjunto de dados qualquer* (ver as <a href="#consideracoes-metodologicas">considerações metodológicas</a>):</p>
+<ul>
+<li>Separa o conjunto de dados em duas partes. Uma para estimação do modelo e outra para predição;</li>
+<li>Salva todas as possíveis combinações das variáveis independentes, que podem ser incluídas em um modelo de regressão linear simples;</li>
+<li>Estima, para cada combinação:
+<ul>
+<li>Um modelo de regressão linear simples utilizando as variáveis da combinação como preditores;</li>
+<li>O percentual de acerto de acordo com a regra <em>- acerto se o valor arredondado, predito pelo modelo, for igual ao valor observado.</em></li>
+</ul></li>
+</ul>
+<p>Para uma ilustração do algoritmo utilizou-se o conjunto de dados, denominado <code>wine</code>. Este conjunto se refere a avaliação de vinhos brancos. Neste estudo foram observadas 10 características de cada vinho na qual pretende-se correlacionar com a qualidade do vinho, mensurada através de avaliadores que atribuíram notas de 1 a 9. Abaixo temos a estrutura R do conjunto.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## browseURL(&quot;paste0(https://gitlab.c3sl.ufpr.br/di12/massive/raw/&quot;,
+##           &quot;master/data/wine.rda&quot;)
+<span class="kw">load</span>(<span class="st">&quot;./data/wine.rda&quot;</span>)
+<span class="kw">str</span>(wine)</code></pre></div>
+<pre><code>## &#39;data.frame&#39;:    4898 obs. of  11 variables:
+##  $ fixed.acidity       : num  7 6,3 8,1 7,2 7,2 8,1 6,2 7 6,3 8,1 ...
+##  $ volatile.acidity    : num  0,27 0,3 0,28 0,23 0,23 0,28 0,32 0,27 0,3 0,22 ...
+##  $ citric.acid         : num  0,36 0,34 0,4 0,32 0,32 0,4 0,16 0,36 0,34 0,43 ...
+##  $ residual.sugar      : num  20,7 1,6 6,9 8,5 8,5 6,9 7 20,7 1,6 1,5 ...
+##  $ chlorides           : num  0,045 0,049 0,05 0,058 0,058 0,05 0,045 0,045 0,049 0,044 ...
+##  $ free.sulfur.dioxide : num  45 14 30 47 47 30 30 45 14 28 ...
+##  $ total.sulfur.dioxide: num  170 132 97 186 186 97 136 170 132 129 ...
+##  $ pH                  : num  3 3,3 3,26 3,19 3,19 3,26 3,18 3 3,3 3,22 ...
+##  $ sulphates           : num  0,45 0,49 0,44 0,4 0,4 0,44 0,47 0,45 0,49 0,45 ...
+##  $ alcohol             : num  8,8 9,5 10,1 9,9 9,9 10,1 9,6 8,8 9,5 11 ...
+##  $ quality             : int  6 6 6 6 6 6 6 6 6 6 ...</code></pre>
+<p>Devido a grande quantidade de observações, 4898 ao todo, preferiu-se utilizar apenas 500 observações para aplicação do método. Além disso o número de modelos a serem estimados foi fixado em 50, não mais todos os modelos que podem ser estimados. Isso devido ao tempo computacional demasiadamente gasto para execução da função. Abaixo temos o carregamento da função e sua utilização neste (sub)conjunto de dados.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">source</span>(<span class="st">&quot;https://gitlab.c3sl.ufpr.br/di12/massive/raw/master/R/massive.R&quot;</span>)
+
+<span class="kw">load</span>(<span class="st">&quot;./data/wine.rda&quot;</span>)
+
+base &lt;-<span class="st"> </span>wine[<span class="dv">1</span>:<span class="dv">500</span>, ]
+test &lt;-<span class="st"> </span><span class="kw">massive</span>(base, <span class="dt">seed =</span> <span class="dv">20124689</span>)
+
+compara &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">aic =</span> test$aic, <span class="dt">acertos =</span> test$pacertos)
+<span class="kw">str</span>(compara)</code></pre></div>
+<pre><code>## &#39;data.frame&#39;:    50 obs. of  2 variables:
+##  $ aic    : num  107 126 107 121 107 ...
+##  $ acertos: num  44 38 43 39 43 37 44 37 43 38 ...</code></pre>
+<p>A implementação do algoritmo também calcula o valor de AIC para posterior comparação com o percentual de acertos proposto no algoritmo. Abaixo verificamos a relação destas duas medidas de qualidade do modelo onde uma leva em consideração a verossimilhança e o número de parâmetros do modelo e a outra somente o poder preditivo sem se importar com o modelo subjacente.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(lattice)
+<span class="kw">xyplot</span>(acertos ~<span class="st"> </span>aic,
+       <span class="dt">ylab =</span> <span class="st">&quot;Percentual de acertos&quot;</span>,
+       <span class="dt">xlab =</span> <span class="st">&quot;Critério de Akaike&quot;</span>,
+       <span class="dt">type =</span> <span class="kw">c</span>(<span class="st">&quot;p&quot;</span>, <span class="st">&quot;smooth&quot;</span>),
+       <span class="dt">grid =</span> <span class="ot">TRUE</span>,
+       <span class="dt">pch =</span> <span class="dv">19</span>,
+       <span class="dt">data =</span> compara)</code></pre></div>
+<p><img src="work1_files/figure-html/unnamed-chunk-4-1.png" title="" alt="" width="672" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">coefsAic &lt;-<span class="st"> </span>test$coef[<span class="kw">which.max</span>(compara$acertos)][[<span class="dv">1</span>]]
+coefsMassive &lt;-<span class="st"> </span>test$coef[<span class="kw">which.max</span>(compara$acertos)][[<span class="dv">1</span>]]</code></pre></div>
+<p>Neste gráfico o padrão esperado deveria ser uma relação linear inversamente proporcional, ou seja, quanto menor o AIC maior o percentual de acertos. Porém não é, exatamente, o observado na figura. Notamos que há uma correlação negativa entre as medidas mas há também, uma variabilidade muito grande ocasionando discordância na escolha de modelos pelas duas alternativas. Dentre os 50 modelos estimados o melhor modelo sugerido pelo AIC é o que contém as variáveis <em>(Intercept), chlorides, total.sulfur.dioxide, pH, sulphates, alcohol</em> e o modelo sugerido pelo percentual de acertos contém <em>(Intercept), chlorides, total.sulfur.dioxide, pH, sulphates, alcohol</em>.</p>
+</div>
+<div id="melhorias-metodologicas" class="section level1">
+<h1>Melhorias metodológicas</h1>
+</div>
+<div id="melhorias-computacionais" class="section level1">
+<h1>Melhorias computacionais</h1>
+</div>
+<div id="informacoes-da-sessao-r" class="section level1">
+<h1>Informações da sessão R</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">format</span>(<span class="kw">Sys.time</span>(),
+           <span class="dt">format =</span> <span class="st">&quot;Atualizado em %d de %B de %Y.</span><span class="ch">\n\n</span><span class="st">&quot;</span>))</code></pre></div>
+<pre><code>## Atualizado em 08 de agosto de 2016.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()</code></pre></div>
+<pre><code>## R version 3.3.1 (2016-06-21)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.5 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=pt_BR.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=pt_BR.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=pt_BR.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=pt_BR.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] xtable_1.8-2        knitr_1.12.3        latticeExtra_0.6-28
+## [4] RColorBrewer_1.1-2  lattice_0.20-33    
+## 
+## loaded via a namespace (and not attached):
+##  [1] magrittr_1.5      MASS_7.3-45       splines_3.3.1    
+##  [4] nnls_1.4          quadprog_1.5-5    multcomp_1.4-5   
+##  [7] stringr_1.0.0     tools_3.3.1       stabs_0.5-1      
+## [10] parallel_3.3.1    grid_3.3.1        TH.data_1.0-7    
+## [13] modeltools_0.2-21 htmltools_0.3     yaml_2.1.13      
+## [16] survival_2.39-4   mboost_2.6-0      digest_0.6.9     
+## [19] Matrix_1.2-6      party_1.0-25      formatR_1.3      
+## [22] codetools_0.2-14  strucchange_1.5-1 evaluate_0.9     
+## [25] rmarkdown_0.9.6   coin_1.1-2        sandwich_2.3-4   
+## [28] stringi_1.0-1     compiler_3.3.1    stats4_3.3.1     
+## [31] mvtnorm_1.0-5     zoo_1.7-13</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

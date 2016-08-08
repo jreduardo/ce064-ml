@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Eduardo E. R. Junior - DEST/UFPR" />
+
+
+<title>Machine Learning - Métodos de Classificação Supervisionados</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<link href="site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+div.sourceCode {
+  overflow-x: visible;
+}
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 45px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+
+.section h2 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h3 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h4 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h5 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h6 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+<script src="site_libs/navigation-1.0/codefolding.js"></script>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Trabalhos práticos
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="work1.html">Regressão Linear</a>
+    </li>
+    <li>
+      <a href="work2.html">Gradiente Descentente</a>
+    </li>
+    <li>
+      <a href="work3.html">Regularização: Penalização Ridge e Lasso</a>
+    </li>
+    <li>
+      <a href="work4.html">Cross Validation e Bootstrap</a>
+    </li>
+    <li>
+      <a href="work5.html">Métodos de Classificação Supervisionados</a>
+    </li>
+    <li>
+      <a href="work6.html">Support Vector Machine</a>
+    </li>
+    <li>
+      <a href="work8.html">Text and Image Mining</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="work-master.pdf">Trabalho final</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://jreduardo.github.io/">Eduardo Jr's website</a>
+</li>
+<li>
+  <a href="https://github.com/JrEduardo/ce064-ml">
+    <span class="fa fa-github-alt fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All</a></li>
+</ul>
+</div>
+
+
+<h1 class="title toc-ignore">Machine Learning - Métodos de Classificação Supervisionados</h1>
+<h4 class="author"><em>Eduardo E. R. Junior - DEST/UFPR</em></h4>
+<h4 class="date"><em>05 de maio de 2016</em></h4>
+
+</div>
+
+
+<div id="conjunto-de-dados" class="section level1">
+<h1>Conjunto de dados</h1>
+<p>Para a aplicação dos métodos de classificação apresentados em sala de aula utilizaremos a conjunto <code>Pima.te</code> e <code>Pima.tr</code>, do pacote <code>MASS</code> do software R. Estes dados se referem a um levantamento realizado pelo Instituto Nacional de Diabetes, Doenças Digestivas e Renais dos Estados Unidados com mulheres do povoado indígena Pima, próximo a Phoenix, Estado do Arizona. Ao todo a base de dados contém o registro de 8 variáveis, contudo nesse trabalho utilizaremos somente as variáveis descritas abaixo.</p>
+<ul>
+<li><code>type:</code> Se a mulher tem ou não diabetes, com base nos critérios da OMS;</li>
+<li><code>bmi:</code> índice de massa corporal, calculado como peso<span class="math inline">\(cdot\)</span>altura<span class="math inline">\(^{-2}\)</span>, sendo o peso e a altura mensurados em quilogramas e metros respectivamente.</li>
+<li><code>ped:</code> <em>Diabetes Pedigree Function (DPF)</em>, valores que medem a tendência ao desenvolvimento de diabetes com base nas relações genéticas do indivíduo.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></li>
+</ul>
+<p>O objetivo neste estudo é classificar as mulheres com e sem diabetes baseando-se no índice de massa corporal e no valor da função <em>DPF</em>. Uma característica destes dados é que eles já estão divididos em, no R, em base a ser utilizada para o treino do método classificador, <code>Pima.tr</code> e base de teste para utilizar o método já calibrado, denominada <code>Pima.te</code>.</p>
+<p>Abaixo temos a representação gráfica do conjunto de dados.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(MASS)
+
+id &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">rep</span>(<span class="st">&quot;treino&quot;</span>, <span class="kw">nrow</span>(Pima.tr)),
+        <span class="kw">rep</span>(<span class="st">&quot;teste&quot;</span>, <span class="kw">nrow</span>(Pima.te)))
+<span class="kw">xyplot</span>(bmi ~<span class="st"> </span>ped |<span class="st"> </span>id, <span class="dt">groups =</span> type,
+       <span class="dt">grid =</span> <span class="ot">TRUE</span>,
+       <span class="dt">data =</span> <span class="kw">rbind</span>(Pima.tr, Pima.te))</code></pre></div>
+<p><img src="work5_files/figure-html/unnamed-chunk-3-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div id="dados-de-treino" class="section level2">
+<h2>Dados de treino</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Visualizando os dados para antecipar problemas com classificadores
+d1 &lt;-<span class="st"> </span><span class="kw">densityplot</span>(~bmi, <span class="dt">groups =</span> type, <span class="dt">grid =</span> <span class="ot">TRUE</span>, <span class="dt">data =</span> Pima.tr)
+d2 &lt;-<span class="st"> </span><span class="kw">densityplot</span>(~ped, <span class="dt">groups =</span> type, <span class="dt">grid =</span> <span class="ot">TRUE</span>, <span class="dt">data =</span> Pima.tr)
+
+<span class="kw">print</span>(d1, <span class="dt">split =</span> <span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>), <span class="dt">more =</span> <span class="ot">TRUE</span>)
+<span class="kw">print</span>(d2, <span class="dt">split =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>), <span class="dt">more =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<p><img src="work5_files/figure-html/unnamed-chunk-4-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p>Com base nos gráficos acima já podemos prever uma taxa de classificação não tão elevada, pois as variáveis escolhidas para classificação estão dispostas de forma muito similar.</p>
+</div>
+</div>
+<div id="metodos-de-classificacao" class="section level1">
+<h1>Métodos de classificação</h1>
+<div id="modelo-logistico" class="section level2">
+<h2>Modelo logístico</h2>
+<p>O modelo denominado modelo logístico é um modelo da classe dos modelos lineares generalizados, cujo a distribuição considerada para a relação condicional <span class="math inline">\(Y \mid X\)</span> é Binomial(<span class="math inline">\(m\)</span>, <span class="math inline">\(\pi\)</span>) e função de ligação logito (qu dá nome ao modelo). Assim o modelo pode ser escrito da seguinte forma:</p>
+<p><span class="math display">\[
+\begin{aligned}
+    Y \mid X_i \sim \textrm{Binomial}(m_i, \, \pi_i) \\
+    \log \left ( \frac{\pi}{ 1 - \pi} \right ) = X\beta
+\end{aligned}
+\]</span></p>
+<p>No software R (nativo na instalação, pacote base), temos os <em>framework</em> <code>glm</code> que ajuste modelos de regressão lineares generalizados via minimização da função <em>deviance</em>. Utilizaremos esta função para ajuste do modelo logístico e alternativamente será programado o algoritmo de maximização da log-verossimilhança para exemplicar o método de estimação dos parâmetros. Como são otimizações equivalentes os resultados devem ser iguais.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Função para estimação de um GLM Binomial (restrito a n = 1)
+binomreg &lt;-<span class="st"> </span>function(formula, data) {
+    ## Declarando a função de verossimilhança
+    veross &lt;-<span class="st"> </span>function(betas, y, X, <span class="dt">log =</span> <span class="ot">TRUE</span>) {
+        eXb &lt;-<span class="st"> </span><span class="kw">exp</span>(X %*%<span class="st"> </span>betas)
+        pi &lt;-<span class="st"> </span>eXb /<span class="st"> </span>(<span class="dv">1</span> +<span class="st"> </span>eXb)
+        ll &lt;-<span class="st"> </span><span class="kw">sum</span>(y *<span class="st"> </span><span class="kw">log</span>(pi) +<span class="st"> </span>(<span class="dv">1</span> -<span class="st"> </span>y) *<span class="st"> </span><span class="kw">log</span>(<span class="dv">1</span> -<span class="st"> </span>pi))
+        if (!log) ll &lt;-<span class="st"> </span><span class="kw">exp</span>(ll)
+        <span class="kw">return</span>(ll)
+    }
+    ## Definindo as matrizes do modelo
+    frame &lt;-<span class="st"> </span><span class="kw">model.frame</span>(formula, <span class="dt">data =</span> data)
+    y &lt;-<span class="st"> </span><span class="kw">model.response</span>(frame)
+    X &lt;-<span class="st"> </span><span class="kw">model.matrix</span>(formula, data)
+    if(!<span class="kw">class</span>(y) %in%<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;numeric&quot;</span>, <span class="st">&quot;integer&quot;</span>)) {
+        y &lt;-<span class="st"> </span><span class="kw">as.integer</span>(y) -<span class="st"> </span><span class="dv">1</span>
+    }
+    ## Otimizando
+    opt &lt;-<span class="st"> </span><span class="kw">optim</span>(<span class="dt">par =</span> <span class="kw">rep</span>(<span class="dv">0</span>, <span class="kw">ncol</span>(X)), veross,
+                 <span class="dt">y =</span> y, <span class="dt">X =</span> X, <span class="dt">method =</span> <span class="st">&quot;BFGS&quot;</span>,
+                 <span class="dt">control =</span> <span class="kw">list</span>(<span class="dt">fnscale =</span> -<span class="dv">1</span>))
+    <span class="kw">return</span>(opt)
+}
+
+##-------------------------------------------
+## Utilizando a função no nosso conjunto de dados
+
+## Definindo os preditores lineares
+f1 &lt;-<span class="st"> </span>type ~<span class="st"> </span><span class="dv">1</span>
+f2 &lt;-<span class="st"> </span>type ~<span class="st"> </span>bmi +<span class="st"> </span>ped
+
+## Ajustando os modelos com a função descrita
+m1 &lt;-<span class="st"> </span><span class="kw">binomreg</span>(f1, <span class="dt">data =</span> Pima.tr)
+m2 &lt;-<span class="st"> </span><span class="kw">binomreg</span>(f2, <span class="dt">data =</span> Pima.tr)
+
+## Ajustando os modelos com a glm
+g1 &lt;-<span class="st"> </span><span class="kw">glm</span>(f1, <span class="dt">data =</span> Pima.tr, <span class="dt">family =</span> binomial)
+g2 &lt;-<span class="st"> </span><span class="kw">glm</span>(f2, <span class="dt">data =</span> Pima.tr, <span class="dt">family =</span> binomial)
+
+## Comparando os ajustes
+
+## Log-verossimilhança alcançada
+<span class="kw">cbind</span>(<span class="st">&quot;GLM&quot;</span> =<span class="st"> </span><span class="kw">c</span>(<span class="kw">logLik</span>(g1), <span class="kw">logLik</span>(g2)),
+      <span class="st">&quot;binomreg&quot;</span> =<span class="st"> </span><span class="kw">c</span>(m1$value, m2$value))</code></pre></div>
+<pre><code>##            GLM  binomreg
+## [1,] -128.2071 -128.2071
+## [2,] -117.5110 -117.5110</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Agora os coeficientes estimados
+<span class="kw">cbind</span>(<span class="st">&quot;GLM&quot;</span> =<span class="st"> </span><span class="kw">c</span>(<span class="kw">coef</span>(g1), <span class="kw">coef</span>(g2)),
+      <span class="st">&quot;binomreg&quot;</span> =<span class="st"> </span><span class="kw">c</span>(m1$par, m2$par))</code></pre></div>
+<pre><code>##                     GLM    binomreg
+## (Intercept) -0.66329422 -0.66329424
+## (Intercept) -4.37613317 -4.37517161
+## bmi          0.09612468  0.09610259
+## ped          1.17601545  1.17561713</code></pre>
+<p>Verificando agora o poder preditivo (de classificação) do modelo ajustado</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(Epi)
+## ROC(form = f2, data = Pima.tr, plot = &quot;ROC&quot;)
+probs &lt;-<span class="st"> </span><span class="kw">predict</span>(g2, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>)
+<span class="kw">ROC</span>(<span class="dt">test =</span> probs, <span class="dt">stat =</span> Pima.tr$type, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)</code></pre></div>
+<p><img src="work5_files/figure-html/unnamed-chunk-6-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Realizando a classificação via GLM com ponto de corte ótimo
+cg &lt;-<span class="st"> </span><span class="kw">ifelse</span>(<span class="kw">predict</span>(g2, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>) &gt;<span class="st"> </span><span class="fl">0.3553</span>, <span class="st">&quot;Yes&quot;</span>, <span class="st">&quot;No&quot;</span>)
+
+## Tabela de classificação no treino
+(tcg &lt;-<span class="st"> </span><span class="kw">table</span>(cg, Pima.tr$type))</code></pre></div>
+<pre><code>##      
+## cg    No Yes
+##   No  95  25
+##   Yes 37  43</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tabela de classificação no teste
+cg &lt;-<span class="st"> </span><span class="kw">ifelse</span>(<span class="kw">predict</span>(g2, <span class="dt">newdata =</span> Pima.te, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>) &gt;<span class="st"> </span><span class="fl">0.3553</span>,
+             <span class="st">&quot;Yes&quot;</span>, <span class="st">&quot;No&quot;</span>)
+<span class="kw">table</span>(cg, Pima.te$type)</code></pre></div>
+<pre><code>##      
+## cg     No Yes
+##   No  139  31
+##   Yes  84  78</code></pre>
+</div>
+<div id="discriminante-de-fisher" class="section level2">
+<h2>Discriminante de Fisher</h2>
+<div id="discriminante-linear" class="section level3">
+<h3>Discriminante Linear</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(MASS)
+
+## Realizando a análise via Discriminante linear
+dl &lt;-<span class="st"> </span><span class="kw">lda</span>(type ~<span class="st"> </span>ped +<span class="st"> </span>bmi, <span class="dt">data =</span> Pima.tr)
+
+## Tabela de classificação no treino
+(tdl &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="kw">predict</span>(dl)$class, Pima.tr$type))</code></pre></div>
+<pre><code>##      
+##        No Yes
+##   No  119  51
+##   Yes  13  17</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tabela de classificação no teste
+<span class="kw">table</span>(<span class="kw">predict</span>(dl, <span class="dt">newdata =</span> Pima.te)$class, Pima.te$type)</code></pre></div>
+<pre><code>##      
+##        No Yes
+##   No  195  65
+##   Yes  28  44</code></pre>
+</div>
+<div id="discriminante-quadratico" class="section level3">
+<h3>Discriminante quadrático</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(MASS)
+
+## Realizando a análise via Discriminante linear
+dq &lt;-<span class="st"> </span><span class="kw">qda</span>(type ~<span class="st"> </span>ped +<span class="st"> </span>bmi, <span class="dt">data =</span> Pima.tr)
+
+## Tabela de classificação no treino
+(tdq &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="kw">predict</span>(dq)$class, Pima.tr$type))</code></pre></div>
+<pre><code>##      
+##        No Yes
+##   No  123  55
+##   Yes   9  13</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tabela de classificação no teste
+<span class="kw">table</span>(<span class="kw">predict</span>(dq, <span class="dt">newdata =</span> Pima.te)$class, Pima.te$type)</code></pre></div>
+<pre><code>##      
+##        No Yes
+##   No  204  73
+##   Yes  19  36</code></pre>
+</div>
+</div>
+<div id="discriminante-regularizado" class="section level2">
+<h2>Discriminante Regularizado</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(klaR)
+
+## Realizando a análise via Discriminante linear
+dr &lt;-<span class="st"> </span><span class="kw">rda</span>(type ~<span class="st"> </span>ped +<span class="st"> </span>bmi, <span class="dt">data =</span> Pima.tr)
+
+## Tabela de classificação no treino
+(tdr &lt;-<span class="st"> </span><span class="kw">table</span>(<span class="kw">predict</span>(dr)$class, Pima.tr$type))</code></pre></div>
+<pre><code>##      
+##        No Yes
+##   No  120  53
+##   Yes  12  15</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tabela de classificação no teste
+<span class="kw">table</span>(<span class="kw">predict</span>(dr, <span class="dt">newdata =</span> Pima.te)$class, Pima.te$type)</code></pre></div>
+<pre><code>##      
+##        No Yes
+##   No  197  68
+##   Yes  26  41</code></pre>
+</div>
+<div id="comparando-os-metodos" class="section level2">
+<h2>Comparando os métodos</h2>
+<p>Como comparação de métodos de classificação temos, além das tabelas de predição um gráfico que apresenta, geralmente os valores de especificidade e sensibilidade calculados para um intervalo de pontos de corte considerados na classificação. Este gráfico já fora utilizado na seção <a href="#modelo-logistico">Modelo Logístico</a>, onde a utilizamos para encontrar o ponto de corte ótimo de classificação. Aqui como critério de comparação utilizaremos a área abaixo da curva (do inglês <em>Area Under the Curve - AUC</em>), pois quanto maior a área maior a acertividade do método.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">2</span>))
+
+## Para o GLM
+probs1 &lt;-<span class="st"> </span><span class="kw">predict</span>(g2, <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>)
+rcg &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs1, <span class="dt">stat =</span> Pima.tr$type, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)
+<span class="kw">title</span>(<span class="st">&quot;Regressão Logística&quot;</span>)
+
+## Para o Discriminante Linear
+probs2 &lt;-<span class="st"> </span><span class="kw">predict</span>(dl)$posterior[, <span class="st">&quot;Yes&quot;</span>]
+rdl &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs2, <span class="dt">stat =</span> Pima.tr$type, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)
+<span class="kw">title</span>(<span class="st">&quot;Discriminante Linear&quot;</span>)
+
+## Para o Discriminante Quadrático
+probs3 &lt;-<span class="st"> </span><span class="kw">predict</span>(dq)$posterior[, <span class="st">&quot;Yes&quot;</span>]
+rdq &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs3, <span class="dt">stat =</span> Pima.tr$type, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)
+<span class="kw">title</span>(<span class="st">&quot;Discriminante Quadrático&quot;</span>)
+
+## Para o Discriminante Regularizado
+probs4 &lt;-<span class="st"> </span><span class="kw">predict</span>(dr)$posterior[, <span class="st">&quot;Yes&quot;</span>]
+rdr &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs4, <span class="dt">stat =</span> Pima.tr$type, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)
+<span class="kw">title</span>(<span class="st">&quot;Discriminante Regularizado&quot;</span>)</code></pre></div>
+<p><img src="work5_files/figure-html/unnamed-chunk-10-1.png" title="" alt="" width="960" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Comparando via AUC, Sensibilidade, Especificidade, Negativo/Positivo,
+## Positivo/Negativo e Pontos de Corte respectivamente.
+tableC &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="kw">list</span>(rcg, rdl, rdq, rdr),
+                       <span class="dt">FUN =</span> function(roc) {
+                           index &lt;-<span class="st"> </span><span class="kw">with</span>(roc$res,
+                                         <span class="kw">which.max</span>(sens +<span class="st"> </span>spec))
+                           <span class="kw">round</span>(<span class="kw">cbind</span>(roc$res[index, ],
+                                       <span class="st">&quot;AUC&quot;</span> =<span class="st"> </span>roc$AUC), <span class="dv">4</span>)
+                       })
+<span class="kw">colnames</span>(tableC) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Reg. Logística&quot;</span>, <span class="st">&quot;Discr. Linear&quot;</span>,
+                      <span class="st">&quot;Discr. Quadrático&quot;</span>, <span class="st">&quot;Discr. Regularizado&quot;</span>)
+
+<span class="kw">kable</span>(tableC, <span class="dt">align =</span> <span class="kw">c</span>(<span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">Reg. Logística</th>
+<th align="center">Discr. Linear</th>
+<th align="center">Discr. Quadrático</th>
+<th align="center">Discr. Regularizado</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sens</td>
+<td align="center">0.6324</td>
+<td align="center">0.6324</td>
+<td align="center">0.5882</td>
+<td align="center">0.6029</td>
+</tr>
+<tr class="even">
+<td align="left">spec</td>
+<td align="center">0.7197</td>
+<td align="center">0.7197</td>
+<td align="center">0.7576</td>
+<td align="center">0.7424</td>
+</tr>
+<tr class="odd">
+<td align="left">pvp</td>
+<td align="center">0.2083</td>
+<td align="center">0.2083</td>
+<td align="center">0.2188</td>
+<td align="center">0.216</td>
+</tr>
+<tr class="even">
+<td align="left">pvn</td>
+<td align="center">0.4625</td>
+<td align="center">0.4625</td>
+<td align="center">0.4444</td>
+<td align="center">0.4533</td>
+</tr>
+<tr class="odd">
+<td align="left">probs1</td>
+<td align="center">0.3553</td>
+<td align="center">0.3503</td>
+<td align="center">0.3577</td>
+<td align="center">0.3666</td>
+</tr>
+<tr class="even">
+<td align="left">AUC</td>
+<td align="center">0.7023</td>
+<td align="center">0.7019</td>
+<td align="center">0.7153</td>
+<td align="center">0.7049</td>
+</tr>
+</tbody>
+</table>
+<p>Pelos gráficos e pela tabela acima temos o método de classificação por Discrinante Quadrático de Fisher com um desempenho ligeiramente superior aos demais que se seguem na ordem Regressão Logística e Discriminante Linear com desempenho equivalente e via Discriminante Regularizado com o pior desempenho.</p>
+<p>Ressalta-se aqui que não consideramos na análise custos associados a falsos positivos e falsos negativos, ou ainda benefícios à verdadeiros positivos e verdadeiros negativos. Isto pode e deve, quando disponível, ser levado em consideração, neste trabalho todas essas situações tem o peso peso e assim foram calculados os demais resultados (principalmente o ponto de corte de classificação, que leva em conta o ponto que maximiza a especificidade e sensibilidade conjuntamente). Ainda destacamos que, embora nesse caso tenhamos os resultados no conjunto de teste <code>Pima.te</code>, na prática isso não acontece e portanto tentou-se reproduzir uma análise real, onde todos os resultados são retirados do conjunto de treino para, então o método calibrado ser aplicado ao conjunto de treino.</p>
+</div>
+</div>
+<div id="informacoes-da-sessao-r" class="section level1">
+<h1>Informações da sessão R</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">format</span>(<span class="kw">Sys.time</span>(),
+           <span class="dt">format =</span> <span class="st">&quot;Atualizado em %d de %B de %Y.</span><span class="ch">\n\n</span><span class="st">&quot;</span>))</code></pre></div>
+<pre><code>## Atualizado em 08 de agosto de 2016.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()</code></pre></div>
+<pre><code>## R version 3.3.1 (2016-06-21)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.5 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=pt_BR.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=pt_BR.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=pt_BR.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=pt_BR.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] parallel  stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] klaR_0.6-12         Epi_2.0             MASS_7.3-45        
+##  [4] glmnet_2.0-5        foreach_1.4.3       Matrix_1.2-6       
+##  [7] mboost_2.6-0        stabs_0.5-1         knitr_1.12.3       
+## [10] latticeExtra_0.6-28 RColorBrewer_1.1-2  lattice_0.20-33    
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.5       compiler_3.3.1    formatR_1.3      
+##  [4] highr_0.5.1       plyr_1.8.3        iterators_1.0.8  
+##  [7] tools_3.3.1       digest_0.6.9      evaluate_0.9     
+## [10] cmprsk_2.2-7      yaml_2.1.13       mvtnorm_1.0-5    
+## [13] coin_1.1-2        stringr_1.0.0     combinat_0.0-8   
+## [16] stats4_3.3.1      grid_3.3.1        survival_2.39-4  
+## [19] etm_0.6-2         rmarkdown_0.9.6   multcomp_1.4-5   
+## [22] TH.data_1.0-7     magrittr_1.5      codetools_0.2-14 
+## [25] htmltools_0.3     modeltools_0.2-21 nnls_1.4         
+## [28] splines_3.3.1     strucchange_1.5-1 quadprog_1.5-5   
+## [31] sandwich_2.3-4    stringi_1.0-1     party_1.0-25     
+## [34] zoo_1.7-13</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>J. W. Smith, J. E. Everhart, W. C. Dickson, W. C. Knowler, and R. S. Johannes (1988). Using the ADAP learning algorithm to forecast the onset of diabetes mellitus. In Symposium on Computer Applications in Medical Care , 261–265<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

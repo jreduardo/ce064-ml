@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Eduardo E. R. Junior - DEST/UFPR" />
+
+
+<title>Machine Learning - Text and Image Mining</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<link href="site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+div.sourceCode {
+  overflow-x: visible;
+}
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 45px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+
+.section h2 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h3 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h4 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h5 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h6 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+<script src="site_libs/navigation-1.0/codefolding.js"></script>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Trabalhos práticos
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="work1.html">Regressão Linear</a>
+    </li>
+    <li>
+      <a href="work2.html">Gradiente Descentente</a>
+    </li>
+    <li>
+      <a href="work3.html">Regularização: Penalização Ridge e Lasso</a>
+    </li>
+    <li>
+      <a href="work4.html">Cross Validation e Bootstrap</a>
+    </li>
+    <li>
+      <a href="work5.html">Métodos de Classificação Supervisionados</a>
+    </li>
+    <li>
+      <a href="work6.html">Support Vector Machine</a>
+    </li>
+    <li>
+      <a href="work8.html">Text and Image Mining</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="work-master.pdf">Trabalho final</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://jreduardo.github.io/">Eduardo Jr's website</a>
+</li>
+<li>
+  <a href="https://github.com/JrEduardo/ce064-ml">
+    <span class="fa fa-github-alt fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All</a></li>
+</ul>
+</div>
+
+
+<h1 class="title toc-ignore">Machine Learning - Text and Image Mining</h1>
+<h4 class="author"><em>Eduardo E. R. Junior - DEST/UFPR</em></h4>
+<h4 class="date"><em>18 de junho de 2016</em></h4>
+
+</div>
+
+
+<p>Nesse trabalho o objetivo é ilustrar uma aplicação de análise de texto. A principal, e mais desafiadora, tarefa em análise de texto e imagens é transformar dados não estruturados (e.g. textos, conteúdos de sites, imagens, etc.) em dados numéricos estruturados. A partir dos dados estruturados as análises já são bem estabelecidas na Estatística.</p>
+<p>O trabalho está organizado em XX seções onde mostra-se os recursos computacionais providos no <em>software</em> R para manipulação e análise de texto. O texto a ser analisado é uma amostra dos <em>reviews</em> americanos sobre o filme <strong>O Rei Leão</strong> (em inglês <em>The Lion King</em>).</p>
+<div id="manipulando-dados" class="section level1">
+<h1>Manipulando dados</h1>
+<p>Primeiramente vamos ler os dados, que foram disponibilizados em arquivo de texto pleno, veja o arquivo <a href="./data/reviews_TheLionKing">reviews_TheLionKing</a>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##-------------------------------------------
+## Lendo os dados
+
+daLines &lt;-<span class="st"> </span><span class="kw">readLines</span>(<span class="st">&quot;./data/reviews_TheLionKing&quot;</span>)
+daLines &lt;-<span class="st"> </span>daLines[<span class="kw">nchar</span>(daLines) &gt;<span class="st"> </span><span class="dv">3</span>]</code></pre></div>
+<p>Note que os dados foram lidos linha a linha e as linhas com um número de caracteres menor que 3 foram descartadas, pois são aquelas que dividem os <em>reviews</em>.</p>
+<p>Com os dados devidamente carregados utilizamos os resursos do pacote <code>tm</code> (<em>Text Mining Package</em>), que trazem diversas funções para facilitar a manipulação de textos no <em>software</em> R.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##-------------------------------------------
+## Criando objeto para funções do pacote tm
+<span class="kw">library</span>(tm)
+doc &lt;-<span class="st"> </span><span class="kw">Corpus</span>(<span class="kw">VectorSource</span>(daLines))
+doc</code></pre></div>
+<pre><code>## &lt;&lt;VCorpus&gt;&gt;
+## Metadata:  corpus specific: 0, document level (indexed): 0
+## Content:  documents: 36</code></pre>
+<p>Então no objeto <code>doc</code> temos nossos textos salvos no formato que o pacote <code>tm</code> requer, de classe <code>VCorpus</code>. Para ver os métodos que o pacote <code>tm</code> disponibiliza para esta classe faça <code>methods(class = &quot;VCorpus&quot;)</code>. Desses métodos temos que <code>tm_map(...)</code> é o essencial para manipulação do texto. Abaixo fazemos uso desse.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##-------------------------------------------
+## Higienização do texto
+cleandoc &lt;-<span class="st"> </span><span class="kw">tm_map</span>(doc, <span class="kw">content_transformer</span>(tolower))
+cleandoc &lt;-<span class="st"> </span><span class="kw">tm_map</span>(cleandoc, removeWords, <span class="kw">stopwords</span>(<span class="st">&quot;english&quot;</span>))
+cleandoc &lt;-<span class="st"> </span><span class="kw">tm_map</span>(cleandoc, removePunctuation)
+cleandoc &lt;-<span class="st"> </span><span class="kw">tm_map</span>(cleandoc, stripWhitespace)
+cleandoc &lt;-<span class="st"> </span><span class="kw">tm_map</span>(cleandoc, removeNumbers)
+cleandoc &lt;-<span class="st"> </span><span class="kw">tm_map</span>(cleandoc, stemDocument)</code></pre></div>
+<p>E assim, como esse é um exemplo muito simples, terminados a manipulação preliminar do texto removendo todos os caracteres (pontuação, espaço, números, preposições, artigos, etc.) não importantes para informação transmitida pelo texto. Ainda deixamos somente o radical das palavras, para que palavras que exprimem o mesmo significado sejam mantidas com mesmo nome.</p>
+<p>Finalmente podemos transformar nossos dados de texto em número e então analisá-los. Os dados provenientes de texto, geralmente, são as frequências de ocorrências das palavras nos textos. No pacote <code>tm</code> a função <code>DocumentTermMatrix(...)</code> armazena os resumos numéricos do texto.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+## Transformando texto em dados numéricos
+dtm &lt;-<span class="st"> </span><span class="kw">DocumentTermMatrix</span>(cleandoc)
+dtm</code></pre></div>
+<pre><code>## &lt;&lt;DocumentTermMatrix (documents: 36, terms: 1373)&gt;&gt;
+## Non-/sparse entries: 2971/46457
+## Sparsity           : 94%
+## Maximal term length: 17
+## Weighting          : term frequency (tf)</code></pre>
+<p>A partir do objeto <code>dtm</code> faremos as análises conforme apresentado nas próximas seções.</p>
+</div>
+<div id="analise-de-texto" class="section level1">
+<h1>Análise de texto</h1>
+<div id="descricao" class="section level2">
+<h2>Descrição</h2>
+<p>Para exibir os dados, primeiramente somamos as palavras em todos os textos e definimos um valor de corte, que representará a quantidade de palavras que serão exibidas nas análises realizadas no trabalho.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Descritiva geral
+ma &lt;-<span class="st"> </span><span class="kw">as.matrix</span>(dtm)
+freqs &lt;-<span class="st"> </span><span class="kw">sort</span>(<span class="kw">colSums</span>(ma), <span class="dt">decreasing =</span> <span class="ot">TRUE</span>)
+corte &lt;-<span class="st"> </span><span class="kw">quantile</span>(freqs, <span class="dt">probs =</span> <span class="fl">0.99</span>)
+corte</code></pre></div>
+<pre><code>## 99% 
+##  24</code></pre>
+<p>ou seja, definimos que apenas 0,01 % das palavras (já higienizadas) serão importantes para exprimir a informação contida no texto, isso significa que trabalharemos apenas com palavras, cuja a frequência seja superior à 24. Como veremos adiante essa percentagem é relevante quando se trabalha com texto. Abaixo temos as frequências das 13 palavras consideradas.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(lattice)
+<span class="kw">library</span>(latticeExtra)
+
+<span class="kw">barchart</span>(co ~<span class="st"> </span><span class="kw">seq_along</span>(co),
+         <span class="dt">data =</span> <span class="kw">data.frame</span>(<span class="dt">co =</span> freqs[freqs &gt;<span class="st"> </span>corte]),
+         <span class="dt">axis =</span> axis.grid,
+         <span class="dt">horizontal =</span> <span class="ot">FALSE</span>,
+         <span class="dt">scales =</span> <span class="kw">list</span>(
+             <span class="dt">x =</span> <span class="kw">list</span>(<span class="dt">rot =</span> <span class="dv">45</span>, <span class="dt">labels =</span> <span class="kw">names</span>(freqs)[freqs &gt;<span class="st"> </span>corte])),
+         <span class="dt">panel =</span> function(x, y, ...) {
+             <span class="kw">panel.barchart</span>(x, y, ...)
+             <span class="kw">panel.text</span>(x, y +<span class="st"> </span><span class="dv">2</span>, y)
+         })</code></pre></div>
+<p><img src="work8_files/figure-html/unnamed-chunk-8-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="nuvem-de-palavras" class="section level2">
+<h2>Nuvem de palavras</h2>
+<p>Como análise descritiva, mas que também serve para algumas tomadas de decisão temos a representação de nuvem de palavras, mas conhecida como <em>wordcloud</em> do inglês. Abaixo temos a nuvem gerada com os <em>reviews</em> do filme rei Leão.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Nuvem de palavras
+<span class="kw">library</span>(wordcloud)
+paleta &lt;-<span class="st"> </span><span class="kw">brewer.pal</span>(<span class="dv">9</span>, <span class="st">&quot;Blues&quot;</span>)[-(<span class="dv">1</span>:<span class="dv">4</span>)]
+<span class="kw">wordcloud</span>(<span class="dt">words =</span> <span class="kw">names</span>(freqs),
+          <span class="dt">freq =</span> freqs,
+          <span class="dt">min.freq =</span> <span class="dv">5</span>,
+          <span class="dt">random.order =</span> F,
+          <span class="dt">colors =</span> paleta,
+          <span class="dt">vfont =</span> <span class="kw">c</span>(<span class="st">&quot;serif&quot;</span>, <span class="st">&quot;plain&quot;</span>))</code></pre></div>
+<p><img src="work8_files/figure-html/unnamed-chunk-9-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p>Note que temos poucas palavras destacadas no centro da nuvem com cores mais escuras, ou seja, as que foram escritas mais vezes. Como dito anteriormente, em análise de textos são poucas as palavras que trazem informação relevante sobre o texto como um todo.</p>
+</div>
+<div id="associacao-de-palavras" class="section level2">
+<h2>Associação de palavras</h2>
+<p>Outra ferramente muito útil para análise de texto é o estudo de palavras correlacionadas ou associadas. Isso é de extrema relevância por algumas palavras ganham outro sentido caso sejam precedidas ou sucedidas por outras. Suponha, por exemplo em português, que a palavra <code>muito</code> tenha sido destacada com uma frequência alta, se ela estiver fortemente relacionada com a palavra <code>bom</code> é um indicativo positivo do objeto em análise, mas caso esteja relacionada com a palavra <code>curto</code> a interpretação é diferente. A análise de associação das palavras nos <em>reviews</em> de Rei Leão é expressa na figura abaixo.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cols &lt;-<span class="st"> </span><span class="kw">trellis.par.get</span>(<span class="st">&quot;superpose.line&quot;</span>)$col
+
+## Associação de palavras
+attrs &lt;-<span class="st"> </span><span class="kw">list</span>(
+    <span class="dt">node =</span> <span class="kw">list</span>(
+        <span class="dt">fontsize =</span> <span class="dv">18</span>, <span class="dt">fontcolor =</span> cols[<span class="dv">2</span>], <span class="dt">shape =</span> <span class="st">&quot;plaintext&quot;</span>))
+
+<span class="kw">library</span>(Rgraphviz)
+freq.terms &lt;-<span class="st"> </span><span class="kw">findFreqTerms</span>(dtm, <span class="dt">lowfreq =</span> corte)
+<span class="kw">plot</span>(dtm, <span class="dt">term =</span> freq.terms, <span class="dt">corThreshold =</span> <span class="fl">0.4</span>,
+     <span class="dt">weighting =</span> <span class="ot">TRUE</span>, <span class="dt">attrs =</span> attrs)</code></pre></div>
+<p><img src="work8_files/figure-html/unnamed-chunk-10-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p>Na figura a largura das linhas representa a intensidade da relação, mas somente as associações entre as <code>sum(freqs &gt; corte)</code> palavras que tem frequência maior que 24 são exibidas. Note a forte correlação de <code>king</code> com <code>lion</code>, como sabemos que estas duas palavras se referem ao nome do filme poderíamos substituí-las por uma única palavra, <code>lionking</code> por exemplo, e refazer as análises. Nas demais palavras correlacionadas notamos que <code>charact</code> é relaciona no texto com <code>disney</code>, <code>film</code>, <code>like</code>, <code>anim</code> indicando que os espectadores do filme gostaram dos personagens do disney representados no filme.</p>
+<p>Uma palavra interessante de se observar a relação com outras é <code>like</code>, assim conseguiremos observar de quais elementos do filme as pessoas que escreveram os <em>reviews</em> gostaram.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Palavras associadas com `charact`
+<span class="kw">findAssocs</span>(dtm, <span class="st">&quot;like&quot;</span>, <span class="fl">0.75</span>)</code></pre></div>
+<pre><code>## $like
+##    spectacular          still           aint            ala         amount 
+##           0.80           0.80           0.77           0.77           0.77 
+##            amp     antichrist antiintellectu         anymor          appli 
+##           0.77           0.77           0.77           0.77           0.77 
+##        assault          banal           bent           bone            boy 
+##           0.77           0.77           0.77           0.77           0.77 
+##          brute     casablanca          catch         caught      cheaplook 
+##           0.77           0.77           0.77           0.77           0.77 
+##        citizen         clever           cloy        coarser      contribut 
+##           0.77           0.77           0.77           0.77           0.77 
+##        coolest          degre        deliber          digit         direct 
+##           0.77           0.77           0.77           0.77           0.77 
+##          earli         ethnic          excit           fair          fairi 
+##           0.77           0.77           0.77           0.77           0.77 
+##    fastforward          femal           form        forward         genius 
+##           0.77           0.77           0.77           0.77           0.77 
+##        godless           grow       guillaum           hatr           hood 
+##           0.77           0.77           0.77           0.77           0.77 
+##         impact         inevit    infantilist          initi     intellectu 
+##           0.77           0.77           0.77           0.77           0.77 
+##       intellig           issu           kane         matter        mention 
+##           0.77           0.77           0.77           0.77           0.77 
+##          newer     nobleheart         nobodi           none           oliv 
+##           0.77           0.77           0.77           0.77           0.77 
+##         overst      overwhelm           pace            pan          peter 
+##           0.77           0.77           0.77           0.77           0.77 
+##      pinocchio          pleas      pocahonta           post           pure 
+##           0.77           0.77           0.77           0.77           0.77 
+##         racial          react       reaction       reawaken          relat 
+##           0.77           0.77           0.77           0.77           0.77 
+##         result        rewatch         robert          robin         romanc 
+##           0.77           0.77           0.77           0.77           0.77 
+##         shaman          shape         shtick          smart       smartest 
+##           0.77           0.77           0.77           0.77           0.77 
+##          solid         sparkl        starter           step         strong 
+##           0.77           0.77           0.77           0.77           0.77 
+##         struck        suspect           tale         taylor  thomasmatthew 
+##           0.77           0.77           0.77           0.77           0.77 
+##          toler           took         tortur      treatment        triumph 
+##           0.77           0.77           0.77           0.77           0.77 
+##       underton          venal          weird     whitebread            wit 
+##           0.77           0.77           0.77           0.77           0.77 
+##            zip        tonight         actual          irrit 
+##           0.77           0.76           0.75           0.75</code></pre>
+</div>
+<div id="agrupamento-de-palavras" class="section level2">
+<h2>Agrupamento de palavras</h2>
+<p>Complementar à associação de palavras podemos também tentar agrupar palavras. Esse agrupamento, feito por uma regra lógica adotado, informa sobre quais características são percebidas conjuntamente, assim espera-se que melhorando um aspecto do filme as características agrupadas a este serão alteradas.</p>
+<p>No caso dos <em>reviews</em> realizou-se o agrupamento de palavras via método <em>Ward</em> que consiste na maximização da homogeneidade dentro dos grupos. O resultado é apresentado na figura abaixo.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Agrupamento de palavras
+k =<span class="st"> </span><span class="dv">4</span> ## Decisão não automatizada, para agrupamento herárquico
+mdist &lt;-<span class="st"> </span><span class="kw">dist</span>(<span class="kw">scale</span>(<span class="kw">t</span>(ma[, <span class="kw">colSums</span>(ma) &gt;<span class="st"> </span>corte])))
+agrup &lt;-<span class="st"> </span><span class="kw">hclust</span>(mdist, <span class="dt">method =</span> <span class="st">&quot;ward.D&quot;</span>)
+
+<span class="kw">library</span>(dendextend)
+dchart &lt;-<span class="st"> </span><span class="kw">color_branches</span>(<span class="kw">as.dendrogram</span>(agrup), <span class="dt">k =</span> k, <span class="dt">col =</span> cols[<span class="dv">1</span>:k])
+dchart &lt;-<span class="st"> </span><span class="kw">color_labels</span>(dchart, <span class="dt">k =</span> k, <span class="dt">col =</span> cols[<span class="dv">1</span>:k])
+<span class="kw">plot</span>(dchart)
+<span class="kw">rect.dendrogram</span>(<span class="kw">as.dendrogram</span>(agrup), <span class="dt">k =</span> k, <span class="dt">lty =</span> <span class="dv">2</span>,
+                <span class="dt">border =</span> <span class="st">&quot;gray30&quot;</span>)</code></pre></div>
+<p><img src="work8_files/figure-html/unnamed-chunk-12-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p>Um inconveniente dos métodos hierárquicos clássicos de agrupamente é que a formação de grupos não é automatizada, assim a cada nova inclusão de dados na base se faz necessária a intervenção humana para escolha do número de grupos. Há propostas que fazem a escolha do número de grupos de forma automática via cálculos feitos nas matrizes de distâncias.</p>
+<p>Note que no agrupamento os grupos formados foram interessantes, por exemplo <code>film</code> e <code>movi</code> são palavras relevantes. Porém como aparecem sempre em contextos distintos tornan-se grupos de um só elemento. Já no grupo à esquerda temos os elementos <code>disney</code>, <code>lion</code> e <code>king</code>, ou seja, um agrupamento que não nos informa nada sobre a qualidade do filme. E por último o grupo com o maior número de elementos onde temos <code>simba</code>, <code>like</code>, <code>charact</code> e <code>anim</code> como alguns elementos.</p>
+<p>Diante das análises realizadas podemos dizer que há evidências nos <em>reviews</em> que indicam a boa avaliação dos espectadores com relação ao filme. Ainda imagina-se que alguns elementos do filme que influenciaram na boa avaliação do público foram os personagens, como simba, e a animação em geral.</p>
+</div>
+</div>
+<div id="informacoes-da-sessao-r" class="section level1">
+<h1>Informações da sessão R</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">format</span>(<span class="kw">Sys.time</span>(),
+           <span class="dt">format =</span> <span class="st">&quot;Atualizado em %d de %B de %Y.</span><span class="ch">\n\n</span><span class="st">&quot;</span>))</code></pre></div>
+<pre><code>## Atualizado em 08 de agosto de 2016.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()</code></pre></div>
+<pre><code>## R version 3.3.1 (2016-06-21)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.5 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=pt_BR.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=pt_BR.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=pt_BR.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=pt_BR.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] grid      parallel  stats     graphics  grDevices utils     datasets 
+## [8] methods   base     
+## 
+## other attached packages:
+##  [1] dendextend_1.1.8    Rgraphviz_2.14.0    graph_1.48.0       
+##  [4] wordcloud_2.5       tm_0.6-2            NLP_0.1-9          
+##  [7] e1071_1.6-7         klaR_0.6-12         Epi_2.0            
+## [10] MASS_7.3-45         glmnet_2.0-5        foreach_1.4.3      
+## [13] Matrix_1.2-6        mboost_2.6-0        stabs_0.5-1        
+## [16] knitr_1.12.3        latticeExtra_0.6-28 RColorBrewer_1.1-2 
+## [19] lattice_0.20-33    
+## 
+## loaded via a namespace (and not attached):
+##  [1] zoo_1.7-13          modeltools_0.2-21   coin_1.1-2         
+##  [4] slam_0.1-32         splines_3.3.1       etm_0.6-2          
+##  [7] htmltools_0.3       stats4_3.3.1        yaml_2.1.13        
+## [10] survival_2.39-4     BiocGenerics_0.16.1 multcomp_1.4-5     
+## [13] plyr_1.8.3          stringr_1.0.0       combinat_0.0-8     
+## [16] mvtnorm_1.0-5       codetools_0.2-14    evaluate_0.9       
+## [19] strucchange_1.5-1   class_7.3-14        highr_0.5.1        
+## [22] TH.data_1.0-7       Rcpp_0.12.5         party_1.0-25       
+## [25] formatR_1.3         cmprsk_2.2-7        digest_0.6.9       
+## [28] stringi_1.0-1       quadprog_1.5-5      tools_3.3.1        
+## [31] sandwich_2.3-4      magrittr_1.5        whisker_0.3-2      
+## [34] nnls_1.4            rmarkdown_0.9.6     iterators_1.0.8    
+## [37] compiler_3.3.1</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

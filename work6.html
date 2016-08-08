@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Eduardo E. R. Junior - DEST/UFPR" />
+
+
+<title>Machine Learning - Support Vector Machine</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<link href="site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+div.sourceCode {
+  overflow-x: visible;
+}
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 45px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+
+.section h2 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h3 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h4 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h5 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h6 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+<script src="site_libs/navigation-1.0/codefolding.js"></script>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Trabalhos práticos
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="work1.html">Regressão Linear</a>
+    </li>
+    <li>
+      <a href="work2.html">Gradiente Descentente</a>
+    </li>
+    <li>
+      <a href="work3.html">Regularização: Penalização Ridge e Lasso</a>
+    </li>
+    <li>
+      <a href="work4.html">Cross Validation e Bootstrap</a>
+    </li>
+    <li>
+      <a href="work5.html">Métodos de Classificação Supervisionados</a>
+    </li>
+    <li>
+      <a href="work6.html">Support Vector Machine</a>
+    </li>
+    <li>
+      <a href="work8.html">Text and Image Mining</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="work-master.pdf">Trabalho final</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://jreduardo.github.io/">Eduardo Jr's website</a>
+</li>
+<li>
+  <a href="https://github.com/JrEduardo/ce064-ml">
+    <span class="fa fa-github-alt fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All</a></li>
+</ul>
+</div>
+
+
+<h1 class="title toc-ignore">Machine Learning - Support Vector Machine</h1>
+<h4 class="author"><em>Eduardo E. R. Junior - DEST/UFPR</em></h4>
+<h4 class="date"><em>17 de maio de 2016</em></h4>
+
+</div>
+
+
+<div id="implementacoes-em-r" class="section level1">
+<h1>Implementações em R</h1>
+<p>Neste trabalho utilizaremos o <em>software</em> R pela praticidade e por ser <em>software</em> estatístico mais utilizado pela comunidade. No R diversos pacotes são destinado a <em>Machine Learning e Statistical Learning</em>, como pode ser visto em <a href="https://cran.r-project.org/web/views/MachineLearning.html">Cran Task Views</a>.</p>
+<p>Aqui, seguindo as recomendações do texto base da disciplina <a href="http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Sixth%20Printing.pdf">An Introduction to Statistical Learning</a>, utilizaremos o pacote <code>e1071</code> que é uma implementação em R baseada na <a href="https://www.csie.ntu.edu.tw/~cjlin/libsvm/">LIBSVM</a>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Pacote principal
+<span class="kw">library</span>(e1071)
+
+##-------------------------------------------
+## Outros pacotes
+## library(LiblineaR)
+## library(klaR)
+## library(kernlab)
+## library(rdetools)</code></pre></div>
+</div>
+<div id="conjunto-de-dados" class="section level1">
+<h1>Conjunto de dados</h1>
+<p>Para a aplicação dos métodos de classificação via SVM serão utilizados os dados <code>OJ</code> (<em>Oranje Juice</em>) do pacote <code>ISLR</code> (pacote complementar do livro-texto da disciplina). Esses dados reference a 1070 observações sobre compra de sucos de laranja em um mercado. Os registros contemplam a informação de interesse, suco comprado <code>CC</code> para <em>Citrus Hill</em> e <code>MM</code> <em>Minute Maid</em> e demais 17 características sobre o cliente e produto.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##======================================================================
+## Os dados
+## help(OJ, h = &quot;html&quot;)
+<span class="kw">data</span>(OJ, <span class="dt">package =</span> <span class="st">&quot;ISLR&quot;</span>)
+<span class="kw">str</span>(OJ)</code></pre></div>
+<pre><code>## &#39;data.frame&#39;:    1070 obs. of  18 variables:
+##  $ Purchase      : Factor w/ 2 levels &quot;CH&quot;,&quot;MM&quot;: 1 1 1 2 1 1 1 1 1 1 ...
+##  $ WeekofPurchase: num  237 239 245 227 228 230 232 234 235 238 ...
+##  $ StoreID       : num  1 1 1 1 7 7 7 7 7 7 ...
+##  $ PriceCH       : num  1.75 1.75 1.86 1.69 1.69 1.69 1.69 1.75 1.75 1.75 ...
+##  $ PriceMM       : num  1.99 1.99 2.09 1.69 1.69 1.99 1.99 1.99 1.99 1.99 ...
+##  $ DiscCH        : num  0 0 0.17 0 0 0 0 0 0 0 ...
+##  $ DiscMM        : num  0 0.3 0 0 0 0 0.4 0.4 0.4 0.4 ...
+##  $ SpecialCH     : num  0 0 0 0 0 0 1 1 0 0 ...
+##  $ SpecialMM     : num  0 1 0 0 0 1 1 0 0 0 ...
+##  $ LoyalCH       : num  0.5 0.6 0.68 0.4 0.957 ...
+##  $ SalePriceMM   : num  1.99 1.69 2.09 1.69 1.69 1.99 1.59 1.59 1.59 1.59 ...
+##  $ SalePriceCH   : num  1.75 1.75 1.69 1.69 1.69 1.69 1.69 1.75 1.75 1.75 ...
+##  $ PriceDiff     : num  0.24 -0.06 0.4 0 0 0.3 -0.1 -0.16 -0.16 -0.16 ...
+##  $ Store7        : Factor w/ 2 levels &quot;No&quot;,&quot;Yes&quot;: 1 1 1 1 2 2 2 2 2 2 ...
+##  $ PctDiscMM     : num  0 0.151 0 0 0 ...
+##  $ PctDiscCH     : num  0 0 0.0914 0 0 ...
+##  $ ListPriceDiff : num  0.24 0.24 0.23 0 0 0.3 0.3 0.24 0.24 0.24 ...
+##  $ STORE         : num  1 1 1 1 0 0 0 0 0 0 ...</code></pre>
+<p>O exercício da obtenção de um classificador para esse conjunto de dados também foi proposto no exercício 8, pág. 371 de <em>An Introduction to Statistical Learning</em>. Seguindo as orientações do exercício particionaremos a base de dados em <code>OJ.te</code> e <code>OJ.tr</code>, as bases de teste e treino respectivamente. 800 observações serão tomadas para treino.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+## Separando os dados em teste e treino
+<span class="kw">set.seed</span>(<span class="dv">2016</span>)
+index &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">nrow</span>(OJ), <span class="dv">800</span>)
+OJ.tr &lt;-<span class="st"> </span>OJ[index, ]
+OJ.te &lt;-<span class="st"> </span>OJ[-index, ]</code></pre></div>
+<p>A seguir serão propostos classificadores com base em SVM, considerando <em>kernel</em> <code>linear</code> (que adotando um valor de custo para classificações incorretas, tem o nome de <em>Support Vector Classifiers</em>), <code>polynomial</code>, <code>radial</code> e <code>sigmoid</code>.</p>
+</div>
+<div id="metodos-de-classificacao" class="section level1">
+<h1>Métodos de classificação</h1>
+<p>A função <code>e1071::svm(...)</code> é a função destinada à determinação dos vetores de suporte. O pacote <code>e1071</code> provém também diversos métodos para obtenção de resultados do classificador definido pela <code>svm</code>.</p>
+<p>Nas próximas seções todos os ajustes dos classificadores são realizados via função <code>svm</code>. Abaixo é exibido os argumentos da função.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Para determinar o classificador
+## help(svm, h = &quot;html&quot;)
+<span class="kw">args</span>(e1071:::svm.default)</code></pre></div>
+<pre><code>## function (x, y = NULL, scale = TRUE, type = NULL, kernel = &quot;radial&quot;, 
+##     degree = 3, gamma = if (is.vector(x)) 1 else 1/ncol(x), coef0 = 0, 
+##     cost = 1, nu = 0.5, class.weights = NULL, cachesize = 40, 
+##     tolerance = 0.001, epsilon = 0.1, shrinking = TRUE, cross = 0, 
+##     probability = FALSE, fitted = TRUE, ..., subset, na.action = na.omit) 
+## NULL</code></pre>
+<p>Para comparação dos classificadores serão utilizados inspeções visuais da curva ROC, bem como os resultados obtidos pela classificação. Para exibição dos resultados a função <code>compareROC</code> foi implementada.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##======================================================================
+## Funções utéis
+
+<span class="kw">library</span>(Epi)
+compareROC &lt;-<span class="st"> </span>function(models) {
+    ## Models uma lista nomeada com os resultados da função ROC do
+    ## modelos classificadores a serem comparados
+    tableC &lt;-<span class="st"> </span><span class="kw">sapply</span>(models,
+                     <span class="dt">FUN =</span> function(roc) {
+                         index &lt;-<span class="st"> </span><span class="kw">with</span>(roc$res,
+                                       <span class="kw">which.max</span>(sens +<span class="st"> </span>spec))
+                         <span class="kw">round</span>(<span class="kw">cbind</span>(roc$res[index, ],
+                                     <span class="st">&quot;AUC&quot;</span> =<span class="st"> </span>roc$AUC), <span class="dv">4</span>)
+                     })
+    <span class="kw">rownames</span>(tableC) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;sens&quot;</span>, <span class="st">&quot;spec&quot;</span>, <span class="st">&quot;pvp&quot;</span>, <span class="st">&quot;pvn&quot;</span>, <span class="st">&quot;prob&quot;</span>, <span class="st">&quot;AUC&quot;</span>)
+    <span class="kw">return</span>(tableC)
+}</code></pre></div>
+<div id="svm-kernel-linear" class="section level2">
+<h2>SVM kernel linear</h2>
+<p><span class="math display">\[
+K(x_i, x_k) = \left \langle x_i, \, x_k \right \rangle
+\]</span></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##-------------------------------------------
+## Classificador default
+(c0l &lt;-<span class="st"> </span><span class="kw">svm</span>(Purchase ~<span class="st"> </span>., <span class="dt">kernel =</span> <span class="st">&quot;linear&quot;</span>, <span class="dt">data =</span> OJ.tr,
+           <span class="dt">probability =</span> <span class="ot">TRUE</span>))</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;linear&quot;, 
+##     probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  linear 
+##        cost:  1 
+##       gamma:  0.05555556 
+## 
+## Number of Support Vectors:  331</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Resumo do classificador
+<span class="kw">summary</span>(c0l)</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;linear&quot;, 
+##     probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  linear 
+##        cost:  1 
+##       gamma:  0.05555556 
+## 
+## Number of Support Vectors:  331
+## 
+##  ( 167 164 )
+## 
+## 
+## Number of Classes:  2 
+## 
+## Levels: 
+##  CH MM</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tabela de classificação no treino
+pred.tr0l &lt;-<span class="st"> </span><span class="kw">predict</span>(c0l, <span class="dt">newdata =</span> OJ.tr, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+<span class="kw">table</span>(pred.tr0l, OJ.tr$Purchase)</code></pre></div>
+<pre><code>##          
+## pred.tr0l  CH  MM
+##        CH 442  81
+##        MM  55 222</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tabela de classificação no teste
+pred.te0l &lt;-<span class="st"> </span><span class="kw">predict</span>(c0l, <span class="dt">newdata =</span> OJ.te, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+<span class="kw">table</span>(pred.te0l, OJ.te$Purchase)</code></pre></div>
+<pre><code>##          
+## pred.te0l  CH  MM
+##        CH 137  21
+##        MM  19  93</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Probabilidades associadas as decisões
+probs.tr0l &lt;-<span class="st"> </span><span class="kw">attr</span>(pred.tr0l, <span class="st">&quot;probabilities&quot;</span>)[, <span class="dv">2</span>]
+probs.te0l &lt;-<span class="st"> </span><span class="kw">attr</span>(pred.te0l, <span class="st">&quot;probabilities&quot;</span>)[, <span class="dv">2</span>]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Curvas ROC
+<span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))
+roc.te0l &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs.tr0l, <span class="dt">stat =</span> OJ.tr$Purchase, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)
+roc.tr0l &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs.te0l, <span class="dt">stat =</span> OJ.te$Purchase, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-9-1.png" title="" alt="" width="960" style="display: block; margin: auto;" /></p>
+<p>Perceba que a função <code>svm</code> define alguns argumentos sem que o usuário precise especificá-los. Pelo <em>default</em> da função o método, denominado em sala como <em>Maximal Margin Classifier</em>. Abaixo definidos diferentes valores para o “custo” (que define quantos vetores de suportes serão utilizados na definição da fronteira).</p>
+<p>Comparação de classificadores via validação cruzada Cuidado o tuning é realizado via validação cruzada sob simulação assim diferentes realizações da função geram diferentes resultados. O refinamento dos parâmetros considerados para validação cruzada pode ser feito em <code>tune.control()</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Cuidado !
+<span class="kw">set.seed</span>(<span class="dv">2016</span>)
+(svm.tune &lt;-<span class="st"> </span><span class="kw">tune</span>(svm, Purchase ~<span class="st"> </span>., <span class="dt">data =</span> OJ.tr, <span class="dt">kernel =</span> <span class="st">&quot;linear&quot;</span>,
+                  <span class="dt">ranges =</span> <span class="kw">list</span>(<span class="dt">cost =</span> <span class="kw">c</span>(<span class="fl">0.001</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">10</span>))))</code></pre></div>
+<pre><code>## 
+## Parameter tuning of &#39;svm&#39;:
+## 
+## - sampling method: 10-fold cross validation 
+## 
+## - best parameters:
+##  cost
+##   0.5
+## 
+## - best performance: 0.17375</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(svm.tune)</code></pre></div>
+<pre><code>## 
+## Parameter tuning of &#39;svm&#39;:
+## 
+## - sampling method: 10-fold cross validation 
+## 
+## - best parameters:
+##  cost
+##   0.5
+## 
+## - best performance: 0.17375 
+## 
+## - Detailed performance results:
+##    cost   error dispersion
+## 1 1e-03 0.34625 0.05104804
+## 2 5e-01 0.17375 0.03458584
+## 3 1e+00 0.17375 0.03458584
+## 4 1e+01 0.18000 0.04005205</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(svm.tune)</code></pre></div>
+<p><img src="work6_files/figure-html/tune.linear-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">svm.tune$best.parameters</code></pre></div>
+<pre><code>##   cost
+## 2  0.5</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##-------------------------------------------
+## Definindo os melhor classificador nas validações cruzadas
+c1l &lt;-<span class="st"> </span><span class="kw">svm</span>(Purchase ~<span class="st"> </span>., <span class="dt">kernel =</span> <span class="st">&quot;linear&quot;</span>, <span class="dt">data =</span> OJ.tr,
+           <span class="dt">cost =</span> <span class="fl">0.5</span>, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+
+## Resumo do classificador
+<span class="kw">summary</span>(c1l)</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;linear&quot;, 
+##     cost = 0.5, probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  linear 
+##        cost:  0.5 
+##       gamma:  0.05555556 
+## 
+## Number of Support Vectors:  332
+## 
+##  ( 166 166 )
+## 
+## 
+## Number of Classes:  2 
+## 
+## Levels: 
+##  CH MM</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Gráficos condicionais das fronteiras de classificação
+##     Cuidado! Os valores das demais covariáveis utilizadas para
+##     classificação são definidas como 0. Isso pode ser alterado pelo
+##     argumento slice()
+<span class="kw">plot</span>(c1l, OJ.tr, WeekofPurchase ~<span class="st"> </span>LoyalCH)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-10-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tabela de classificação no treino
+pred.tr1l &lt;-<span class="st"> </span><span class="kw">predict</span>(c1l, <span class="dt">newdata =</span> OJ.tr, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+<span class="kw">table</span>(pred.tr1l, OJ.tr$Purchase)</code></pre></div>
+<pre><code>##          
+## pred.tr1l  CH  MM
+##        CH 443  80
+##        MM  54 223</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tabela de classificação no teste
+pred.te1l &lt;-<span class="st"> </span><span class="kw">predict</span>(c1l, <span class="dt">newdata =</span> OJ.te, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+<span class="kw">table</span>(pred.te1l, OJ.te$Purchase)</code></pre></div>
+<pre><code>##          
+## pred.te1l  CH  MM
+##        CH 136  21
+##        MM  20  93</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Probabilidades associadas as decisões
+probs.tr1l &lt;-<span class="st"> </span><span class="kw">attr</span>(pred.tr1l, <span class="st">&quot;probabilities&quot;</span>)[, <span class="dv">2</span>]
+probs.te1l &lt;-<span class="st"> </span><span class="kw">attr</span>(pred.te1l, <span class="st">&quot;probabilities&quot;</span>)[, <span class="dv">2</span>]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Curvas ROC
+<span class="kw">par</span>(<span class="dt">mfrow =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))
+roc.te1l &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs.tr1l, <span class="dt">stat =</span> OJ.tr$Purchase, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)
+roc.tr1l &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs.te1l, <span class="dt">stat =</span> OJ.te$Purchase, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-11-1.png" title="" alt="" width="960" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+## Comparando via AUC, Sensibilidade, Especificidade, Negativo/Positivo,
+## Positivo/Negativo e Pontos de Corte respectivamente.
+models.linear &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="st">&quot;c0l.treino&quot;</span> =<span class="st"> </span>roc.tr0l, <span class="st">&quot;c1l.treino&quot;</span> =<span class="st"> </span>roc.tr1l,
+                      <span class="st">&quot;c0l.teste&quot;</span> =<span class="st"> </span>roc.te0l, <span class="st">&quot;c1l.teste&quot;</span> =<span class="st"> </span>roc.te1l)
+
+## Armazenando o classificador de melhor desempenho
+models.final &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="st">&quot;linear&quot;</span> =<span class="st"> </span>roc.te0l)
+
+<span class="kw">kable</span>(<span class="kw">compareROC</span>(models.linear), <span class="dt">align =</span> <span class="kw">c</span>(<span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">c0l.treino</th>
+<th align="center">c1l.treino</th>
+<th align="center">c0l.teste</th>
+<th align="center">c1l.teste</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sens</td>
+<td align="center">0.8158</td>
+<td align="center">0.807</td>
+<td align="center">0.8515</td>
+<td align="center">0.8548</td>
+</tr>
+<tr class="even">
+<td align="left">spec</td>
+<td align="center">0.8782</td>
+<td align="center">0.891</td>
+<td align="center">0.831</td>
+<td align="center">0.827</td>
+</tr>
+<tr class="odd">
+<td align="left">pvp</td>
+<td align="center">0.1329</td>
+<td align="center">0.1366</td>
+<td align="center">0.0983</td>
+<td align="center">0.0967</td>
+</tr>
+<tr class="even">
+<td align="left">pvn</td>
+<td align="center">0.1696</td>
+<td align="center">0.156</td>
+<td align="center">0.2456</td>
+<td align="center">0.2493</td>
+</tr>
+<tr class="odd">
+<td align="left">prob</td>
+<td align="center">0.5</td>
+<td align="center">0.5375</td>
+<td align="center">0.3741</td>
+<td align="center">0.3634</td>
+</tr>
+<tr class="even">
+<td align="left">AUC</td>
+<td align="center">0.8975</td>
+<td align="center">0.897</td>
+<td align="center">0.9064</td>
+<td align="center">0.9061</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="svm-kernel-polinomial" class="section level2">
+<h2>SVM kernel polinomial</h2>
+<p><span class="math display">\[
+K(x_i, x_k) = (c_0 + \gamma \left \langle x_i, \, x_k \right \rangle)^d
+\]</span></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+##    kernel = polinomial default
+(c0p &lt;-<span class="st"> </span><span class="kw">svm</span>(Purchase ~<span class="st"> </span>., <span class="dt">kernel =</span> <span class="st">&quot;polynomial&quot;</span>, <span class="dt">data =</span> OJ.tr,
+            <span class="dt">probability =</span> <span class="ot">TRUE</span>))</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;polynomial&quot;, 
+##     probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  polynomial 
+##        cost:  1 
+##      degree:  3 
+##       gamma:  0.05555556 
+##      coef.0:  0 
+## 
+## Number of Support Vectors:  418</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Resumo do modelo
+<span class="kw">summary</span>(c0p)</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;polynomial&quot;, 
+##     probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  polynomial 
+##        cost:  1 
+##      degree:  3 
+##       gamma:  0.05555556 
+##      coef.0:  0 
+## 
+## Number of Support Vectors:  418
+## 
+##  ( 210 208 )
+## 
+## 
+## Number of Classes:  2 
+## 
+## Levels: 
+##  CH MM</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Classificação dos dados de teste
+pred.te0p &lt;-<span class="st"> </span><span class="kw">predict</span>(c0p, <span class="dt">newdata =</span> OJ.te, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+probs.te0p &lt;-<span class="st"> </span><span class="kw">attr</span>(pred.te0p, <span class="st">&quot;probabilities&quot;</span>)[, <span class="dv">2</span>]
+roc.te0p &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs.te0p, <span class="dt">stat =</span> OJ.te$Purchase, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-13-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tuning dos parâmetros (um pouco, talvez bastante, demorado)
+<span class="kw">set.seed</span>(<span class="dv">2016</span>)
+(svm.tune &lt;-<span class="st"> </span><span class="kw">tune</span>(svm, Purchase ~<span class="st"> </span>., <span class="dt">data =</span> OJ.tr,
+                  <span class="dt">kernel =</span> <span class="st">&quot;polynomial&quot;</span>,
+                  <span class="dt">ranges =</span> <span class="kw">list</span>(
+                      <span class="dt">cost =</span> <span class="kw">c</span>(<span class="fl">0.01</span>, <span class="dv">1</span>, <span class="dv">10</span>),
+                      <span class="dt">gamma =</span> <span class="kw">c</span>(<span class="fl">0.01</span>, <span class="dv">1</span>/<span class="kw">ncol</span>(OJ), <span class="fl">0.1</span>),
+                      <span class="dt">coef0 =</span> <span class="kw">c</span>(-<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>),
+                      <span class="dt">degree =</span> <span class="kw">c</span>(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)
+                      )))</code></pre></div>
+<pre><code>## 
+## Parameter tuning of &#39;svm&#39;:
+## 
+## - sampling method: 10-fold cross validation 
+## 
+## - best parameters:
+##  cost gamma coef0 degree
+##     1  0.01     1      2
+## 
+## - best performance: 0.175</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(svm.tune)</code></pre></div>
+<pre><code>## 
+## Parameter tuning of &#39;svm&#39;:
+## 
+## - sampling method: 10-fold cross validation 
+## 
+## - best parameters:
+##  cost gamma coef0 degree
+##     1  0.01     1      2
+## 
+## - best performance: 0.175 
+## 
+## - Detailed performance results:
+##      cost      gamma coef0 degree   error dispersion
+## 1    0.01 0.01000000    -1      2 0.37875 0.04678927
+## 2    1.00 0.01000000    -1      2 0.66125 0.04875178
+## 3   10.00 0.01000000    -1      2 0.65750 0.05041494
+## 4    0.01 0.05555556    -1      2 0.52625 0.04267529
+## 5    1.00 0.05555556    -1      2 0.63250 0.04533824
+## 6   10.00 0.05555556    -1      2 0.63000 0.04647281
+## 7    0.01 0.10000000    -1      2 0.59750 0.02934469
+## 8    1.00 0.10000000    -1      2 0.66000 0.03899786
+## 9   10.00 0.10000000    -1      2 0.65625 0.03919768
+## 10   0.01 0.01000000     0      2 0.37875 0.04678927
+## 11   1.00 0.01000000     0      2 0.35500 0.04216370
+## 12  10.00 0.01000000     0      2 0.22000 0.02513851
+## 13   0.01 0.05555556     0      2 0.37875 0.04678927
+## 14   1.00 0.05555556     0      2 0.19375 0.02224391
+## 15  10.00 0.05555556     0      2 0.17625 0.02461509
+## 16   0.01 0.10000000     0      2 0.35500 0.04216370
+## 17   1.00 0.10000000     0      2 0.19125 0.02285978
+## 18  10.00 0.10000000     0      2 0.18375 0.02285978
+## 19   0.01 0.01000000     1      2 0.37875 0.04678927
+## 20   1.00 0.01000000     1      2 0.17500 0.02700309
+## 21  10.00 0.01000000     1      2 0.17750 0.02486072
+## 22   0.01 0.05555556     1      2 0.30750 0.04297932
+## 23   1.00 0.05555556     1      2 0.18250 0.02220485
+## 24  10.00 0.05555556     1      2 0.18750 0.02886751
+## 25   0.01 0.10000000     1      2 0.20875 0.02889757
+## 26   1.00 0.10000000     1      2 0.17875 0.02360703
+## 27  10.00 0.10000000     1      2 0.18375 0.03175973
+## 28   0.01 0.01000000    -1      3 0.37875 0.04678927
+## 29   1.00 0.01000000    -1      3 0.26000 0.03987829
+## 30  10.00 0.01000000    -1      3 0.26875 0.07643307
+## 31   0.01 0.05555556    -1      3 0.26000 0.04923018
+## 32   1.00 0.05555556    -1      3 0.34625 0.04528076
+## 33  10.00 0.05555556    -1      3 0.31875 0.04535738
+## 34   0.01 0.10000000    -1      3 0.29500 0.05688683
+## 35   1.00 0.10000000    -1      3 0.36125 0.03793727
+## 36  10.00 0.10000000    -1      3 0.35875 0.04641674
+## 37   0.01 0.01000000     0      3 0.37875 0.04678927
+## 38   1.00 0.01000000     0      3 0.36625 0.04641674
+## 39  10.00 0.01000000     0      3 0.31500 0.02486072
+## 40   0.01 0.05555556     0      3 0.36500 0.04816061
+## 41   1.00 0.05555556     0      3 0.18750 0.03385016
+## 42  10.00 0.05555556     0      3 0.20375 0.02766993
+## 43   0.01 0.10000000     0      3 0.31500 0.02486072
+## 44   1.00 0.10000000     0      3 0.20500 0.03593976
+## 45  10.00 0.10000000     0      3 0.20375 0.04291869
+## 46   0.01 0.01000000     1      3 0.37875 0.04678927
+## 47   1.00 0.01000000     1      3 0.18000 0.01881932
+## 48  10.00 0.01000000     1      3 0.17875 0.03007514
+## 49   0.01 0.05555556     1      3 0.20875 0.03007514
+## 50   1.00 0.05555556     1      3 0.18500 0.02622022
+## 51  10.00 0.05555556     1      3 0.19000 0.02874698
+## 52   0.01 0.10000000     1      3 0.18625 0.02729087
+## 53   1.00 0.10000000     1      3 0.18750 0.02568506
+## 54  10.00 0.10000000     1      3 0.20250 0.03717451
+## 55   0.01 0.01000000    -1      4 0.41375 0.03972562
+## 56   1.00 0.01000000    -1      4 0.64375 0.05376453
+## 57  10.00 0.01000000    -1      4 0.64500 0.05309844
+## 58   0.01 0.05555556    -1      4 0.60875 0.04678927
+## 59   1.00 0.05555556    -1      4 0.62000 0.04684490
+## 60  10.00 0.05555556    -1      4 0.62000 0.04684490
+## 61   0.01 0.10000000    -1      4 0.63750 0.03996526
+## 62   1.00 0.10000000    -1      4 0.64750 0.04401704
+## 63  10.00 0.10000000    -1      4 0.64750 0.04401704
+## 64   0.01 0.01000000     0      4 0.37875 0.04678927
+## 65   1.00 0.01000000     0      4 0.37875 0.04678927
+## 66  10.00 0.01000000     0      4 0.36500 0.04816061
+## 67   0.01 0.05555556     0      4 0.36500 0.04816061
+## 68   1.00 0.05555556     0      4 0.24000 0.02486072
+## 69  10.00 0.05555556     0      4 0.21000 0.03374743
+## 70   0.01 0.10000000     0      4 0.31625 0.02766993
+## 71   1.00 0.10000000     0      4 0.21250 0.03584302
+## 72  10.00 0.10000000     0      4 0.19500 0.03593976
+## 73   0.01 0.01000000     1      4 0.37875 0.04678927
+## 74   1.00 0.01000000     1      4 0.18000 0.02371708
+## 75  10.00 0.01000000     1      4 0.17875 0.02503470
+## 76   0.01 0.05555556     1      4 0.19125 0.03120831
+## 77   1.00 0.05555556     1      4 0.18750 0.02700309
+## 78  10.00 0.05555556     1      4 0.19375 0.03963812
+## 79   0.01 0.10000000     1      4 0.18375 0.01868043
+## 80   1.00 0.10000000     1      4 0.18875 0.03251602
+## 81  10.00 0.10000000     1      4 0.21625 0.04411554
+## 82   0.01 0.01000000    -1      5 0.37875 0.04678927
+## 83   1.00 0.01000000    -1      5 0.32375 0.05015601
+## 84  10.00 0.01000000    -1      5 0.31375 0.04267529
+## 85   0.01 0.05555556    -1      5 0.32250 0.04440971
+## 86   1.00 0.05555556    -1      5 0.33875 0.04619178
+## 87  10.00 0.05555556    -1      5 0.35500 0.04901814
+## 88   0.01 0.10000000    -1      5 0.38375 0.04641674
+## 89   1.00 0.10000000    -1      5 0.38250 0.02958040
+## 90  10.00 0.10000000    -1      5 0.38375 0.03007514
+## 91   0.01 0.01000000     0      5 0.37875 0.04678927
+## 92   1.00 0.01000000     0      5 0.37875 0.04678927
+## 93  10.00 0.01000000     0      5 0.36500 0.04816061
+## 94   0.01 0.05555556     0      5 0.36375 0.04730589
+## 95   1.00 0.05555556     0      5 0.24125 0.03120831
+## 96  10.00 0.05555556     0      5 0.21125 0.03458584
+## 97   0.01 0.10000000     0      5 0.30750 0.02220485
+## 98   1.00 0.10000000     0      5 0.20125 0.03793727
+## 99  10.00 0.10000000     0      5 0.21250 0.03486083
+## 100  0.01 0.01000000     1      5 0.36500 0.04556741
+## 101  1.00 0.01000000     1      5 0.17875 0.02433134
+## 102 10.00 0.01000000     1      5 0.18500 0.02751262
+## 103  0.01 0.05555556     1      5 0.18875 0.02531057
+## 104  1.00 0.05555556     1      5 0.18375 0.03064696
+## 105 10.00 0.05555556     1      5 0.19875 0.04505013
+## 106  0.01 0.10000000     1      5 0.18625 0.02598744
+## 107  1.00 0.10000000     1      5 0.19500 0.04456581
+## 108 10.00 0.10000000     1      5 0.22000 0.02513851</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">svm.tune$best.parameters</code></pre></div>
+<pre><code>##    cost gamma coef0 degree
+## 20    1  0.01     1      2</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##-------------------------------------------
+## Definindo os melhor classificador com base nas validações cruzadas
+c1p &lt;-<span class="st"> </span><span class="kw">svm</span>(Purchase ~<span class="st"> </span>., <span class="dt">kernel =</span> <span class="st">&quot;polynomial&quot;</span>, <span class="dt">data =</span> OJ.tr,
+           <span class="dt">cost =</span> <span class="dv">10</span>, <span class="dt">gamma =</span> <span class="fl">0.01</span>, <span class="dt">coef0 =</span> <span class="dv">1</span>, <span class="dt">degree =</span> <span class="dv">2</span>,
+           <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+
+## Resumo do modelo
+<span class="kw">summary</span>(c1p)</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;polynomial&quot;, 
+##     cost = 10, gamma = 0.01, coef0 = 1, degree = 2, probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  polynomial 
+##        cost:  10 
+##      degree:  2 
+##       gamma:  0.01 
+##      coef.0:  1 
+## 
+## Number of Support Vectors:  331
+## 
+##  ( 165 166 )
+## 
+## 
+## Number of Classes:  2 
+## 
+## Levels: 
+##  CH MM</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(c1p, OJ.tr, WeekofPurchase ~<span class="st"> </span>LoyalCH)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-14-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Classificação dos dados de teste
+pred.te1p &lt;-<span class="st"> </span><span class="kw">predict</span>(c1p, <span class="dt">newdata =</span> OJ.te, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+probs.te1p &lt;-<span class="st"> </span><span class="kw">attr</span>(pred.te1p, <span class="st">&quot;probabilities&quot;</span>)[, <span class="dv">2</span>]
+roc.te1p &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs.te1p, <span class="dt">stat =</span> OJ.te$Purchase, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-14-2.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+## Comparando via AUC, Sensibilidade, Especificidade, Negativo/Positivo,
+## Positivo/Negativo e Pontos de Corte respectivamente.
+models.poly &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="st">&quot;c0p.teste&quot;</span> =<span class="st"> </span>roc.te0p, <span class="st">&quot;c1p.teste&quot;</span> =<span class="st"> </span>roc.te1p)
+
+## Armazenando o classificador de melhor desempenho
+models.final$polynomial &lt;-<span class="st"> </span>roc.te1p
+
+<span class="kw">kable</span>(<span class="kw">compareROC</span>(models.poly), <span class="dt">align =</span> <span class="kw">c</span>(<span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">c0p.teste</th>
+<th align="center">c1p.teste</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sens</td>
+<td align="center">0.7982</td>
+<td align="center">0.8158</td>
+</tr>
+<tr class="even">
+<td align="left">spec</td>
+<td align="center">0.891</td>
+<td align="center">0.8846</td>
+</tr>
+<tr class="odd">
+<td align="left">pvp</td>
+<td align="center">0.142</td>
+<td align="center">0.1321</td>
+</tr>
+<tr class="even">
+<td align="left">pvn</td>
+<td align="center">0.1574</td>
+<td align="center">0.1622</td>
+</tr>
+<tr class="odd">
+<td align="left">prob</td>
+<td align="center">0.4689</td>
+<td align="center">0.5192</td>
+</tr>
+<tr class="even">
+<td align="left">AUC</td>
+<td align="center">0.8891</td>
+<td align="center">0.9004</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="svm-kernel-radial" class="section level2">
+<h2>SVM kernel radial</h2>
+<p><span class="math display">\[
+K(x_i, x_k) = \exp(-\gamma \left \| x_i, \, x_k \right \|^2 )
+\]</span></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+##    kernel = radial basis
+(c0r &lt;-<span class="st"> </span><span class="kw">svm</span>(Purchase ~<span class="st"> </span>., <span class="dt">kernel =</span> <span class="st">&quot;radial&quot;</span>, <span class="dt">data =</span> OJ.tr,
+            <span class="dt">probability =</span> <span class="ot">TRUE</span>))</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;radial&quot;, 
+##     probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  radial 
+##        cost:  1 
+##       gamma:  0.05555556 
+## 
+## Number of Support Vectors:  373</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Resumo do modelo
+<span class="kw">summary</span>(c0r)</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;radial&quot;, 
+##     probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  radial 
+##        cost:  1 
+##       gamma:  0.05555556 
+## 
+## Number of Support Vectors:  373
+## 
+##  ( 187 186 )
+## 
+## 
+## Number of Classes:  2 
+## 
+## Levels: 
+##  CH MM</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Classificação dos dados de teste
+pred.te0r &lt;-<span class="st"> </span><span class="kw">predict</span>(c0r, <span class="dt">newdata =</span> OJ.te, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+probs.te0r &lt;-<span class="st"> </span><span class="kw">attr</span>(pred.te0r, <span class="st">&quot;probabilities&quot;</span>)[, <span class="dv">2</span>]
+roc.te0r &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs.te0r, <span class="dt">stat =</span> OJ.te$Purchase, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-16-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tuning dos parâmetros (um pouco demorado)
+<span class="kw">set.seed</span>(<span class="dv">2016</span>)
+(svm.tune &lt;-<span class="st"> </span><span class="kw">tune</span>(svm, Purchase ~<span class="st"> </span>., <span class="dt">data =</span> OJ.tr,
+                  <span class="dt">kernel =</span> <span class="st">&quot;radial&quot;</span>,
+                  <span class="dt">ranges =</span> <span class="kw">list</span>(
+                      <span class="dt">cost =</span> <span class="kw">c</span>(<span class="fl">0.01</span>, <span class="dv">1</span>, <span class="dv">10</span>),
+                      <span class="dt">gamma =</span> <span class="kw">c</span>(<span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="dv">1</span>/<span class="kw">ncol</span>(OJ), <span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="dv">1</span>)
+                  )))</code></pre></div>
+<pre><code>## 
+## Parameter tuning of &#39;svm&#39;:
+## 
+## - sampling method: 10-fold cross validation 
+## 
+## - best parameters:
+##  cost      gamma
+##     1 0.05555556
+## 
+## - best performance: 0.16625</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(svm.tune)</code></pre></div>
+<pre><code>## 
+## Parameter tuning of &#39;svm&#39;:
+## 
+## - sampling method: 10-fold cross validation 
+## 
+## - best parameters:
+##  cost      gamma
+##     1 0.05555556
+## 
+## - best performance: 0.16625 
+## 
+## - Detailed performance results:
+##     cost      gamma   error dispersion
+## 1   0.01 0.00100000 0.37875 0.04678927
+## 2   1.00 0.00100000 0.20375 0.03537988
+## 3  10.00 0.00100000 0.18250 0.03238227
+## 4   0.01 0.01000000 0.37875 0.04678927
+## 5   1.00 0.01000000 0.18125 0.01792151
+## 6  10.00 0.01000000 0.18125 0.02144923
+## 7   0.01 0.05555556 0.37875 0.04678927
+## 8   1.00 0.05555556 0.16625 0.02045490
+## 9  10.00 0.05555556 0.18750 0.02568506
+## 10  0.01 0.10000000 0.37875 0.04678927
+## 11  1.00 0.10000000 0.17625 0.02461509
+## 12 10.00 0.10000000 0.19000 0.02486072
+## 13  0.01 0.50000000 0.37875 0.04678927
+## 14  1.00 0.50000000 0.20125 0.03606033
+## 15 10.00 0.50000000 0.20875 0.04752558
+## 16  0.01 1.00000000 0.37875 0.04678927
+## 17  1.00 1.00000000 0.20625 0.03019037
+## 18 10.00 1.00000000 0.22125 0.04528076</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">svm.tune$best.parameters</code></pre></div>
+<pre><code>##   cost      gamma
+## 8    1 0.05555556</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Resumo do modelo
+<span class="kw">plot</span>(c0r, OJ.tr, WeekofPurchase ~<span class="st"> </span>LoyalCH)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-17-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Armazenando o classificador de melhor desempenho
+models.final$radial &lt;-<span class="st"> </span>roc.te0r</code></pre></div>
+</div>
+<div id="svm-kernel-sigmoid" class="section level2">
+<h2>SVM kernel sigmoid</h2>
+<p><span class="math display">\[
+K(x_i, x_k) = \tanh(c_0 + \gamma \left \langle x_i, \, x_k \right \rangle )
+\]</span></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+##    kernel = sigmoid default
+(c0s &lt;-<span class="st"> </span><span class="kw">svm</span>(Purchase ~<span class="st"> </span>., <span class="dt">kernel =</span> <span class="st">&quot;sigmoid&quot;</span>, <span class="dt">data =</span> OJ.tr,
+            <span class="dt">probability =</span> <span class="ot">TRUE</span>))</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;sigmoid&quot;, 
+##     probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  sigmoid 
+##        cost:  1 
+##       gamma:  0.05555556 
+##      coef.0:  0 
+## 
+## Number of Support Vectors:  309</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Resumo do modelo
+<span class="kw">summary</span>(c0s)</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;sigmoid&quot;, 
+##     probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  sigmoid 
+##        cost:  1 
+##       gamma:  0.05555556 
+##      coef.0:  0 
+## 
+## Number of Support Vectors:  309
+## 
+##  ( 153 156 )
+## 
+## 
+## Number of Classes:  2 
+## 
+## Levels: 
+##  CH MM</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Classificação dos dados de teste
+pred.te0s &lt;-<span class="st"> </span><span class="kw">predict</span>(c0s, <span class="dt">newdata =</span> OJ.te, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+probs.te0s &lt;-<span class="st"> </span><span class="kw">attr</span>(pred.te0s, <span class="st">&quot;probabilities&quot;</span>)[, <span class="dv">2</span>]
+roc.te0s &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs.te0s, <span class="dt">stat =</span> OJ.te$Purchase, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-18-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Tuning dos parâmetros (um pouco demorado)
+<span class="kw">set.seed</span>(<span class="dv">2016</span>)
+(svm.tune &lt;-<span class="st"> </span><span class="kw">tune</span>(svm, Purchase ~<span class="st"> </span>., <span class="dt">data =</span> OJ.tr,
+                  <span class="dt">kernel =</span> <span class="st">&quot;sigmoid&quot;</span>,
+                  <span class="dt">ranges =</span> <span class="kw">list</span>(
+                      <span class="dt">cost =</span> <span class="kw">c</span>(<span class="fl">0.01</span>, <span class="dv">1</span>, <span class="dv">10</span>),
+                      <span class="dt">gamma =</span> <span class="kw">c</span>(<span class="fl">0.001</span>, <span class="fl">0.01</span>, <span class="dv">1</span>/<span class="kw">ncol</span>(OJ), <span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="dv">1</span>),
+                      <span class="dt">coef0 =</span> <span class="kw">c</span>(-<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>)
+                  )))</code></pre></div>
+<pre><code>## 
+## Parameter tuning of &#39;svm&#39;:
+## 
+## - sampling method: 10-fold cross validation 
+## 
+## - best parameters:
+##  cost gamma coef0
+##    10  0.01     0
+## 
+## - best performance: 0.17125</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(svm.tune)</code></pre></div>
+<pre><code>## 
+## Parameter tuning of &#39;svm&#39;:
+## 
+## - sampling method: 10-fold cross validation 
+## 
+## - best parameters:
+##  cost gamma coef0
+##    10  0.01     0
+## 
+## - best performance: 0.17125 
+## 
+## - Detailed performance results:
+##     cost      gamma coef0   error dispersion
+## 1   0.01 0.00100000    -1 0.37875 0.04678927
+## 2   1.00 0.00100000    -1 0.37875 0.04678927
+## 3  10.00 0.00100000    -1 0.17875 0.03175973
+## 4   0.01 0.01000000    -1 0.37875 0.04678927
+## 5   1.00 0.01000000    -1 0.17875 0.03586723
+## 6  10.00 0.01000000    -1 0.17750 0.02415229
+## 7   0.01 0.05555556    -1 0.37875 0.04678927
+## 8   1.00 0.05555556    -1 0.18500 0.03987829
+## 9  10.00 0.05555556    -1 0.21125 0.03197764
+## 10  0.01 0.10000000    -1 0.37875 0.04678927
+## 11  1.00 0.10000000    -1 0.26500 0.06089609
+## 12 10.00 0.10000000    -1 0.28750 0.04750731
+## 13  0.01 0.50000000    -1 0.30500 0.06697844
+## 14  1.00 0.50000000    -1 0.39250 0.07997395
+## 15 10.00 0.50000000    -1 0.39625 0.08313518
+## 16  0.01 1.00000000    -1 0.29625 0.06181570
+## 17  1.00 1.00000000    -1 0.39875 0.06386020
+## 18 10.00 1.00000000    -1 0.40375 0.06536489
+## 19  0.01 0.00100000     0 0.37875 0.04678927
+## 20  1.00 0.00100000     0 0.34625 0.05104804
+## 21 10.00 0.00100000     0 0.18625 0.03030516
+## 22  0.01 0.01000000     0 0.37875 0.04678927
+## 23  1.00 0.01000000     0 0.18500 0.02934469
+## 24 10.00 0.01000000     0 0.17125 0.02503470
+## 25  0.01 0.05555556     0 0.37875 0.04678927
+## 26  1.00 0.05555556     0 0.29875 0.04875178
+## 27 10.00 0.05555556     0 0.27750 0.06313566
+## 28  0.01 0.10000000     0 0.37875 0.04678927
+## 29  1.00 0.10000000     0 0.31125 0.06220765
+## 30 10.00 0.10000000     0 0.28625 0.04226652
+## 31  0.01 0.50000000     0 0.31500 0.05645795
+## 32  1.00 0.50000000     0 0.39000 0.05676462
+## 33 10.00 0.50000000     0 0.39375 0.05870418
+## 34  0.01 1.00000000     0 0.31125 0.05604128
+## 35  1.00 1.00000000     0 0.40250 0.05645795
+## 36 10.00 1.00000000     0 0.40500 0.06619626
+## 37  0.01 0.00100000     1 0.37875 0.04678927
+## 38  1.00 0.00100000     1 0.37875 0.04678927
+## 39 10.00 0.00100000     1 0.18000 0.03395258
+## 40  0.01 0.01000000     1 0.37875 0.04678927
+## 41  1.00 0.01000000     1 0.18375 0.03488573
+## 42 10.00 0.01000000     1 0.24250 0.04456581
+## 43  0.01 0.05555556     1 0.37875 0.04678927
+## 44  1.00 0.05555556     1 0.30875 0.04566256
+## 45 10.00 0.05555556     1 0.32250 0.04322101
+## 46  0.01 0.10000000     1 0.37875 0.04678927
+## 47  1.00 0.10000000     1 0.37625 0.03747684
+## 48 10.00 0.10000000     1 0.37125 0.03775377
+## 49  0.01 0.50000000     1 0.33875 0.05756940
+## 50  1.00 0.50000000     1 0.38875 0.06358776
+## 51 10.00 0.50000000     1 0.36750 0.04174992
+## 52  0.01 1.00000000     1 0.32625 0.05787019
+## 53  1.00 1.00000000     1 0.39000 0.05737305
+## 54 10.00 1.00000000     1 0.39500 0.05898446</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">svm.tune$best.parameters</code></pre></div>
+<pre><code>##    cost gamma coef0
+## 24   10  0.01     0</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##-------------------------------------------
+## Definindo os melhor classificador com base nas validações cruzadas
+c1s &lt;-<span class="st"> </span><span class="kw">svm</span>(Purchase ~<span class="st"> </span>., <span class="dt">kernel =</span> <span class="st">&quot;sigmoid&quot;</span>, <span class="dt">data =</span> OJ.tr,
+           <span class="dt">cost =</span> <span class="dv">10</span>, <span class="dt">gamma =</span> <span class="fl">0.01</span>, <span class="dt">coef0 =</span> <span class="dv">0</span>, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+
+## Resumo do modelo
+<span class="kw">summary</span>(c1s)</code></pre></div>
+<pre><code>## 
+## Call:
+## svm(formula = Purchase ~ ., data = OJ.tr, kernel = &quot;sigmoid&quot;, 
+##     cost = 10, gamma = 0.01, coef0 = 0, probability = TRUE)
+## 
+## 
+## Parameters:
+##    SVM-Type:  C-classification 
+##  SVM-Kernel:  sigmoid 
+##        cost:  10 
+##       gamma:  0.01 
+##      coef.0:  0 
+## 
+## Number of Support Vectors:  343
+## 
+##  ( 173 170 )
+## 
+## 
+## Number of Classes:  2 
+## 
+## Levels: 
+##  CH MM</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(c1s, OJ.tr, WeekofPurchase ~<span class="st"> </span>LoyalCH)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-19-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Classificação dos dados de teste
+pred.te1s &lt;-<span class="st"> </span><span class="kw">predict</span>(c1s, <span class="dt">newdata =</span> OJ.te, <span class="dt">probability =</span> <span class="ot">TRUE</span>)
+probs.te1s &lt;-<span class="st"> </span><span class="kw">attr</span>(pred.te1s, <span class="st">&quot;probabilities&quot;</span>)[, <span class="dv">2</span>]
+roc.te1s &lt;-<span class="st"> </span><span class="kw">ROC</span>(<span class="dt">test =</span> probs.te1s, <span class="dt">stat =</span> OJ.te$Purchase, <span class="dt">plot =</span> <span class="st">&quot;ROC&quot;</span>)</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-19-2.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##----------------------------------------------------------------------
+## Comparando via AUC, Sensibilidade, Especificidade, Negativo/Positivo,
+## Positivo/Negativo e Pontos de Corte respectivamente.
+models.sigmoid &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="st">&quot;c0s.teste&quot;</span> =<span class="st"> </span>roc.te0s, <span class="st">&quot;c1s.teste&quot;</span> =<span class="st"> </span>roc.te1s)
+
+## Armazenando o classificador de melhor desempenho
+models.final$sigmoid &lt;-<span class="st"> </span>roc.te1s
+
+<span class="kw">kable</span>(<span class="kw">compareROC</span>(models.sigmoid), <span class="dt">align =</span> <span class="kw">c</span>(<span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">c0s.teste</th>
+<th align="center">c1s.teste</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sens</td>
+<td align="center">0.5789</td>
+<td align="center">0.8246</td>
+</tr>
+<tr class="even">
+<td align="left">spec</td>
+<td align="center">0.8333</td>
+<td align="center">0.8718</td>
+</tr>
+<tr class="odd">
+<td align="left">pvp</td>
+<td align="center">0.2697</td>
+<td align="center">0.1282</td>
+</tr>
+<tr class="even">
+<td align="left">pvn</td>
+<td align="center">0.2826</td>
+<td align="center">0.1754</td>
+</tr>
+<tr class="odd">
+<td align="left">prob</td>
+<td align="center">0.4862</td>
+<td align="center">0.4871</td>
+</tr>
+<tr class="even">
+<td align="left">AUC</td>
+<td align="center">0.7142</td>
+<td align="center">0.8946</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="comparacao-dos-ajustes" class="section level2">
+<h2>Comparação dos ajustes</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Comparação visual
+<span class="kw">plot</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dt">xlim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="dt">ylim =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="dt">type =</span> <span class="st">&quot;n&quot;</span>,
+     <span class="dt">xlab =</span> <span class="st">&quot;1-Specificity&quot;</span>, <span class="dt">ylab =</span> <span class="st">&quot;Sensitivity&quot;</span>)
+<span class="kw">abline</span>(<span class="dt">v =</span> <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>), <span class="dt">h =</span> <span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="fl">0.1</span>), <span class="dt">col =</span> <span class="st">&quot;gray90&quot;</span>)
+<span class="kw">abline</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dt">col =</span> <span class="st">&quot;gray40&quot;</span>)
+##
+<span class="kw">sapply</span>(<span class="dv">1</span>:<span class="kw">length</span>(models.final), function(i) {
+    <span class="kw">with</span>(models.final[[i]],
+         <span class="kw">points</span>(<span class="dv">1</span> -<span class="st"> </span>res[, <span class="dv">2</span>], res[, <span class="dv">1</span>], <span class="dt">type =</span> <span class="st">&quot;l&quot;</span>, <span class="dt">col =</span> i))
+})</code></pre></div>
+<pre><code>## [[1]]
+## NULL
+## 
+## [[2]]
+## NULL
+## 
+## [[3]]
+## NULL
+## 
+## [[4]]
+## NULL</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##
+<span class="kw">legend</span>(<span class="dt">x =</span> <span class="fl">0.7</span>, <span class="dt">y =</span> <span class="fl">0.4</span>, <span class="dt">lwd =</span> <span class="dv">1</span>,
+       <span class="dt">bty =</span> <span class="st">&quot;n&quot;</span>, <span class="dt">col =</span> <span class="dv">1</span>:<span class="kw">length</span>(models.final),
+       <span class="dt">legend =</span> <span class="kw">names</span>(models.final))</code></pre></div>
+<p><img src="work6_files/figure-html/unnamed-chunk-21-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Comparação das medidas de classificação
+<span class="kw">kable</span>(<span class="kw">compareROC</span>(models.final), <span class="dt">align =</span> <span class="kw">c</span>(<span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;c&quot;</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="center">linear</th>
+<th align="center">polynomial</th>
+<th align="center">radial</th>
+<th align="center">sigmoid</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">sens</td>
+<td align="center">0.8515</td>
+<td align="center">0.8158</td>
+<td align="center">0.8333</td>
+<td align="center">0.8246</td>
+</tr>
+<tr class="even">
+<td align="left">spec</td>
+<td align="center">0.831</td>
+<td align="center">0.8846</td>
+<td align="center">0.8782</td>
+<td align="center">0.8718</td>
+</tr>
+<tr class="odd">
+<td align="left">pvp</td>
+<td align="center">0.0983</td>
+<td align="center">0.1321</td>
+<td align="center">0.1218</td>
+<td align="center">0.1282</td>
+</tr>
+<tr class="even">
+<td align="left">pvn</td>
+<td align="center">0.2456</td>
+<td align="center">0.1622</td>
+<td align="center">0.1667</td>
+<td align="center">0.1754</td>
+</tr>
+<tr class="odd">
+<td align="left">prob</td>
+<td align="center">0.3741</td>
+<td align="center">0.5192</td>
+<td align="center">0.4915</td>
+<td align="center">0.4871</td>
+</tr>
+<tr class="even">
+<td align="left">AUC</td>
+<td align="center">0.9064</td>
+<td align="center">0.9004</td>
+<td align="center">0.8954</td>
+<td align="center">0.8946</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="sabatina" class="section level1">
+<h1>Sabatina</h1>
+<p>Proponha um classificador baseado em <em>Supporte Vector Machine</em> para classificar a espécie das plantas no conjunto de dados <code>iris</code> do R. Considere ao menos 2 classificadores para comparação via classificação em uma base de teste.</p>
+<p>Para particionar os dados em base de treino e teste, pode-se seguir os comandos abaixo.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##======================================================================
+## Sabatina
+<span class="kw">data</span>(iris, <span class="dt">package =</span> <span class="st">&quot;datasets&quot;</span>)
+
+## Dados balanceados com base na espécie
+<span class="kw">table</span>(iris$Species)</code></pre></div>
+<pre><code>## 
+##     setosa versicolor  virginica 
+##         50         50         50</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Utilize como semente seu GRR
+<span class="kw">set.seed</span>(<span class="dv">20124689</span>)
+index &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">50</span>, <span class="dv">100</span>), <span class="dt">ncol =</span> <span class="dv">3</span>, <span class="dt">nrow =</span> <span class="dv">30</span>, <span class="dt">byrow =</span> <span class="ot">TRUE</span>) +
+<span class="st">    </span><span class="kw">replicate</span>(<span class="dv">3</span>, <span class="kw">sample</span>(<span class="dv">1</span>:<span class="dv">50</span>, <span class="dv">30</span>))
+
+## Particione os dados em dados de treino e dados de teste
+iris.tr &lt;-<span class="st"> </span>iris[<span class="kw">c</span>(index), ]
+iris.te &lt;-<span class="st"> </span>iris[-<span class="kw">c</span>(index), ]
+
+## Dados balanceados para treino também
+<span class="kw">table</span>(iris.tr$Species)</code></pre></div>
+<pre><code>## 
+##     setosa versicolor  virginica 
+##         30         30         30</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">table</span>(iris.te$Species)</code></pre></div>
+<pre><code>## 
+##     setosa versicolor  virginica 
+##         20         20         20</code></pre>
+</div>
+<div id="informacoes-da-sessao-r" class="section level1">
+<h1>Informações da sessão R</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">format</span>(<span class="kw">Sys.time</span>(),
+           <span class="dt">format =</span> <span class="st">&quot;Atualizado em %d de %B de %Y.</span><span class="ch">\n\n</span><span class="st">&quot;</span>))</code></pre></div>
+<pre><code>## Atualizado em 08 de agosto de 2016.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()</code></pre></div>
+<pre><code>## R version 3.3.1 (2016-06-21)
+## Platform: x86_64-pc-linux-gnu (64-bit)
+## Running under: Ubuntu 14.04.5 LTS
+## 
+## locale:
+##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+##  [3] LC_TIME=pt_BR.UTF-8        LC_COLLATE=en_US.UTF-8    
+##  [5] LC_MONETARY=pt_BR.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=pt_BR.UTF-8       LC_NAME=C                 
+##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+## [11] LC_MEASUREMENT=pt_BR.UTF-8 LC_IDENTIFICATION=C       
+## 
+## attached base packages:
+## [1] parallel  stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
+## 
+## other attached packages:
+##  [1] e1071_1.6-7         klaR_0.6-12         Epi_2.0            
+##  [4] MASS_7.3-45         glmnet_2.0-5        foreach_1.4.3      
+##  [7] Matrix_1.2-6        mboost_2.6-0        stabs_0.5-1        
+## [10] knitr_1.12.3        latticeExtra_0.6-28 RColorBrewer_1.1-2 
+## [13] lattice_0.20-33    
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.5       compiler_3.3.1    formatR_1.3      
+##  [4] highr_0.5.1       plyr_1.8.3        class_7.3-14     
+##  [7] iterators_1.0.8   tools_3.3.1       digest_0.6.9     
+## [10] evaluate_0.9      cmprsk_2.2-7      yaml_2.1.13      
+## [13] mvtnorm_1.0-5     coin_1.1-2        stringr_1.0.0    
+## [16] combinat_0.0-8    stats4_3.3.1      grid_3.3.1       
+## [19] survival_2.39-4   etm_0.6-2         rmarkdown_0.9.6  
+## [22] multcomp_1.4-5    TH.data_1.0-7     magrittr_1.5     
+## [25] codetools_0.2-14  htmltools_0.3     modeltools_0.2-21
+## [28] nnls_1.4          splines_3.3.1     strucchange_1.5-1
+## [31] quadprog_1.5-5    sandwich_2.3-4    stringi_1.0-1    
+## [34] party_1.0-25      zoo_1.7-13</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
