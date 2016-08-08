@@ -1,0 +1,260 @@
+% Machine Learning - Gradiente Descentente
+% Eduardo E. R. Junior - DEST/UFPR
+% `r format(Sys.time(), "%d de %B de %Y")`
+
+```{r, include = FALSE}
+source("_defs.R")
+```
+
+# Gradiente Descendente #
+
+Neste trabalho prático será aplicado o método **Gradiente Descendente**,
+utilizado para maximizar ou minizar função, no contexto do problema
+estatístico de minimização de uma função custo.
+
+Nosso enfoque será no algoritmo **Gradiente Descendente Boosting**, onde
+a minimizamos uma função custo definida e, a cada iteração do algoritmo,
+os parâmetros do modelo proposto, decorrente da função custo, são
+atualizados via o negativo do gradiente.
+
+Felizmente temos a implementação do algoritmo **Gradiente Descendente
+Boosting** no _software_ estatístico R. O método computacional esta
+disonível na biblioteca [`mboost`], cujo autor também generaliza o
+método para ajuste de modelos lineares generalizados, regressão
+quantílica, modelos de sobrevivência, entre outros.
+
+## Conjunto de dados ##
+
+```{r, include = FALSE}
+
+library(knitr)
+opts_chunk$set(cache = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               fig.align = "center")
+
+infert <- transform(infert,
+                induced = factor(induced),
+                case = factor(case),
+                spontaneous = factor(spontaneous))
+
+```
+
+Os dados considerados para aplicação do método é denominado por
+`infert`, disponível no pacote `datasets`. Este conjunto de dados
+refere-se a um estudo de caso-controle pareado sobre infertilidade após
+o aborto espontâneo ou induzido. O conjunto possui `r ncol(infert)`
+colunas e `r nrow(infert)` observações. As duas últimas colunas do
+conjunto de dados podem ser descartadas para análise, pois são de
+identificação. Com isso dispomos das variáveis _education_ (0-5 anos,
+6-11 anos ou >12 anos), _age_ (idade em anos), _parity_ (contagem),
+_induced_ (0, 1, >2 abortos induzidos), _spontaneous_ (0, 1, >2 abortos
+espontâneos) e _case_ (caso ou controle). A documentação dos dados
+sugere o ajuste do modelo:
+
+$$
+case \mid X \sim Binomial(\hat{\pi}) \\
+logit (\hat{\pi}) = X\underline{\beta}
+$$
+
+onde na matriz X estão todas as variáveis _dummy_ derivadas das
+variáveis originais descritas acima. Os modelos são ajustados no
+software R da seguinte forma:
+
+```{r}
+
+##----------------------------------------------------------------------
+## Preditor adotado
+preditor <- case ~ age + parity + education + spontaneous + induced
+data <- infert
+
+##-------------------------------------------
+## Via GLM
+m0glm <- glm(preditor, data = data, family = binomial)
+
+##-------------------------------------------
+## Via Bootstrap Boosting
+library(mboost)
+m0boost <- glmboost(preditor, data = data,
+                    family = Binomial(link = "logit"),
+                    control = boost_control(mstop = 500),
+                    center = T)
+
+```
+
+O objeto `m0boost` no R tem classe `glmboost` e `mboost` e para estas
+classes o pacote dispõe de vários métodos. Utilizaremos alguns deles
+para verificar o ajuste do modelo GLM via gradiente descendente
+_boosting_ na próxima seção.
+
+## Verificando convergência ##
+
+A primeira forma para verificar a convergência do método é avaliar as
+cadeias de valores gerados para estimativa dos parâmetros.
+
+```{r, cache = FALSE}
+
+## Verificando convergência dos parâmetros
+par(mar = c(5, 4, 4, 7) + 0.1)
+plot(m0boost, off2int = TRUE, lwd = 3, main = "")
+
+```
+
+No gráfico são exibidas os valores de cada iteração dos
+`r length(coef(m0boost))` parâmetros do modelo. Note utilizando o
+algoritmo com `mstop` (nº de iterações) igual a 100 e com "passo"x `nu`
+igual 0.1 (padrão da função) o ajuste não foi não foi satisfatório para
+o problema, as cadeias não "estacionaram" em um valor. Para efeitos
+didáticos continuaremos com esta configuração.
+
+Uma outra forma para verificar a convergência é avaliando a estabilidade
+da função custo. Neste problema o Critério de Informação de Akaike é
+proporcional a função custo, abaixo temos a avaliação do critério de
+Akaike para cada iteração.
+
+```{r}
+
+## Verificando convergência do AIC (função da função custo adotada)
+layout(1)
+aic <- AIC(m0boost, method = "classical")
+plot(aic, lwd = 3)
+grid()
+
+```
+
+Note que, em corcordância com o obervado no gráfico dos valores
+estimados para cada parâmetro em cada iteração, não temos uma
+convergência do AIC com 500 iterações.
+
+## Comparação GLM vs Boost ##
+
+Abaixo como comparação apresentamos os parâmetros estimados em ambos os
+métodos.
+
+```{r, resultis = "asis"}
+
+compareCoefs <- cbind("GLM" = coef(m0glm),
+                      "Boost" = c(
+                          coef(m0boost)[1] + attr(coef(m0boost), "offset"),
+                          coef(m0boost)[-1])*2
+                      )
+
+knitr::kable(compareCoefs, align = c("c", "c"), digits = 4)
+
+```
+
+Note que os parâmetros estimados tiveram uma notável diferença (os
+ajustes de _ofsset_ e escala adotados pela função `glmboost` já foram
+considerados, os valores estão na mesma escala) isso se deve a má
+calibração do algoritmo como já comentado.
+
+
+```{r, resultis = "asis"}
+
+compareCost = rbind("**AIC**" = c("GLM" = AIC(m0glm), "Boost" = aic),
+                    "**logLik**" = c(logLik(m0glm), logLik(m0boost))
+                    )
+
+knitr::kable(compareCost, align = c("c", "c"), digits = 4)
+
+```
+
+De forma similar para as medidas de custo calculadas também observamos a
+diferença. Não tão acentuada quanto nos parâmetros, mas ainda assim
+significativa.
+
+Como o foco em _Machine Learning_ não é inferência e sim predição,
+abaixo é apresentado o gráfico dos valores preditos para o modelo GLM
+estimado via IWLS (_Interative Weighted Least Squares_) e via Gradiente
+Descendente _Boosting_. Claro que são apenas as predições para o próprio
+conjunto de ajuste, porém como isso ocorre para ambos os modelos a
+comparação é justa.
+
+```{r}
+
+pred <- data.frame(
+    "GLM" = predict(m0glm, type = "response"),
+    "Boost" = predict(m0boost, type = "response"))
+
+library(lattice)
+xyplot(GLM ~ Boost, data = pred, pch = 19,
+       type = c("p", "smooth", "g"),
+       col = 1, panel = function(x, y, ...) {
+           panel.xyplot(x, y, ...)
+           panel.abline(0, 1, col = 4)
+       })
+
+```
+
+Em média os valores preditos são os mesmos para ambos os modelos
+ajustados, porém há uma variação devido a má calibração do método.
+
+## Calibrando o método ##
+
+Testando várias configurações do método (valores máximos de iteração e
+valores distintos de `nu` "passo") e observando as características do
+modelo proposto chegamos a configuração abaixo que otimiza a utilização
+do método.
+
+```{r}
+
+##-------------------------------------------
+## Via Bootstrap Boosting
+library(mboost)
+m0boost <- glmboost(preditor, data = data,
+                    family = Binomial(link = "logit"),
+                    control = boost_control(mstop = 250, nu = 1),
+                    center = T)
+
+
+```
+
+E agora recalculando todos os resultados exibidos anteriormente:
+
+```{r}
+
+## Verificando convergência dos parâmetros
+par(mar = c(5, 4, 4, 7) + 0.1)
+plot(m0boost, off2int = TRUE, lwd = 3, main = "")
+
+## Verificando convergência do AIC (função da função custo adotada)
+layout(1)
+aic <- AIC(m0boost, method = "classical")
+plot(aic, lwd = 3)
+grid()
+
+## Comparando os coeficientes estimados
+cbind("GLM" = coef(m0glm),
+      "Boost" = c(coef(m0boost)[1] + attr(coef(m0boost), "offset"),
+                  coef(m0boost)[-1])*2)
+
+rbind("**AIC**" = c("GLM" = AIC(m0glm), "Boost" = aic),
+      "**logLik**" = c(logLik(m0glm), logLik(m0boost))
+      )
+
+## Comparando os valores preditos
+pred <- data.frame(
+    "GLM" = predict(m0glm, type = "response"),
+    "Boost" = predict(m0boost, type = "response"))
+
+library(lattice)
+xyplot(GLM ~ Boost, data = pred, pch = 19,
+       type = c("p", "smooth", "g"),
+       col = 1, panel = function(x, y, ...) {
+           panel.xyplot(x, y, ...)
+           panel.abline(0, 1, col = 4)
+       })
+
+```
+
+E assim obtemos a equivalência dos métodos, exemplificando que uma má
+escolha dos parâmetros do método pode levar a modelos mal estimados. Um
+estudo posterior ao ajuste se faz sempre necessário.
+
+# Informações da sessão R #
+
+```{r}
+cat(format(Sys.time(),
+           format = "Atualizado em %d de %B de %Y.\n\n"))
+sessionInfo()
+```

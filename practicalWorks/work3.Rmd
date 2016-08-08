@@ -1,0 +1,256 @@
+% Machine Learning - Regularização: Penalização Ridge e Lasso
+% Eduardo E. R. Junior - DEST/UFPR
+% `r format(Sys.time(), "%d de %B de %Y")`
+
+```{r, include = FALSE}
+source("_defs.R")
+```
+
+# Regularização #
+
+Neste trabalho prático será aplicado o método **Regularização**,
+onde penalizamos o algoritmo de estimação dos betas (a função custo)
+mantendo, assim, as estimativas dos parâmetros próximas a zero ou
+nulas.
+
+Existem várias definições de como regularizar os parâmetros a serem
+estimados ou penalizar a função custo, em geral, eles se diferem na
+forma de imposição deste custo. O caso mais comumente utilizado é
+penalizar o algoritmo de estimação da seguinte forma:
+
+$$
+\underset{\underline{\beta}}{min} \frac{1}{2n}\sum_{i = 1}^n (y_i -
+X\beta)^2 + \lambda \{ (1 - \alpha) ||\beta||_2^2/2 + \alpha ||\beta||_1
+\}
+$$
+
+onde o **penalty** é dado por $\lambda \{ (1 - \alpha) ||\beta||_2^2/2 +
+\alpha ||\beta||_1 \}$. Neste trabalho o foco será na regularização por
+penalização **Ridge**, onde $\alpha$ é igual a 0 e na regularização por
+penalização **Lasso**, onde $\alpha$ é igual a 1. Em ambos os casos
+quanto maior o valor de $\beta$ maior será sua penalização, ainda se
+tomarmos $0 \leq \alpha \leq 1$ temos uma mescla das abordagens Ridge e
+Lasso (chamada de **Elastic-Net**). Quanto ao multiplicador $\lambda$
+far-se-á um estudo sobre seu impacto na estimativas dos parâmetros.
+
+Felizmente temos a implementação do algoritmo de **Regularização**, da
+forma como apresentada, no _software_ estatístico R. O método
+computacional esta disponível na biblioteca [`glmnet`], provida pela
+empresa [Revolution Analytics](http://revolutionanalytics.com/), onde
+temos métodos para ajuste de modelos lineares generalizados, modelos de
+sobrevivência, entre outros sob penalizações definidas pelo usuário.
+
+## Conjunto de dados ##
+
+```{r, include = FALSE}
+
+library(knitr)
+opts_chunk$set(cache = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               fig.align = "center")
+
+```
+
+Os dados considerados para aplicação do método é denominado por
+`longley`, disponível no pacote `datasets`. Este conjunto de dados
+refere-se a um estudo de macroeconomia onde temos 7 variáveis avaliadas
+em 16 anos consecutivos, de 1947 a 1962.
+
+No R o conjunto de dados tem estrutura conforme _output_ abaixo:
+
+```{r}
+
+str(longley)
+
+```
+
+O modelo considerado aqui será o modelo gaussiano considerando
+`Employed` como variável de interesse e todas as demais como
+explicativas. Conforme Abaixo
+
+$$
+Employed \mid X \sim Normal(\hat{\mu}, \hat{\sigma}^2) \\
+ \hat{\mu} = X\underline{\beta}
+$$
+
+onde a matriz X compreende todas as 6 variáveis explicativas e portanto
+tem dimensão 16x7 (6 $\beta$'s associados as covariáveis e intercepto
+$\beta_0$). Portanto para o modelo descrito serão estimados 8 parâmetros
+(7 de regressão e o `\sigma^2`).
+
+Abaixo ajustamos os modelos:
+
+ - `m0lm`: Modelo gaussiano de regressão múltipla;
+ - `m0ridge`: Modelo gaussiano de regressão múltipla com penalização
+   Ridge;
+ - `m0lasso`: Modelo gaussiano de regressão múltipla com penalização
+   Lasso; e
+ - `m0elnet`: Modelo gaussiano de regressão múltipla com penalização dada
+   por $\alpha = 0.5$
+
+
+```{r}
+
+##----------------------------------------------------------------------
+## Preditor adotado
+preditor <- Employed ~ .
+data <- longley
+
+##-------------------------------------------
+## Via LM (Linear Models)
+m0lm <- lm(preditor, data = data)
+
+##-------------------------------------------
+## Via Reguralização
+library(glmnet)
+
+## É ncessário informar as matrizes X e y
+X <- model.matrix(preditor, data = data)
+y <- longley$Employed
+
+## Regularização Ridge
+m0ridge <- cv.glmnet(x = X, y = y, family = "gaussian", alpha = 0,
+                     grouped = FALSE)
+
+## Regularização Ridge
+m0lasso <- cv.glmnet(x = X, y = y, family = "gaussian", alpha = 1,
+                     grouped = FALSE)
+
+## Regularização Elastic Net (com alpha = 0.5)
+m0elnet <- cv.glmnet(x = X, y = y, family = "gaussian", alpha = 0.5,
+                     grouped = FALSE)
+
+```
+
+Os objetos `m0ridge`, `m0lasso` e `m0net` tem classe `cv.glmnet` e
+para estas classes o pacote dispõe de vários métodos. Utilizaremos
+alguns deles para verificar o ajuste do modelos modelos. Note que
+utilzamos a função `cv.glmnet` o `cv` vem das iniciais _Cross
+Validation_, utilizando esta função o próprio algoritmo programada já
+sugere a melhor opção para $\lambda$ a ser utilizada, segundo o critério
+implementado (Erro quadrático médio da validação cruzada).
+
+## Escolhendo a penalização adequada ##
+
+Essas funções de estimação providas no pacote `glmnet` ajustam, por
+padrão, modelos com diferentes $\lambda$'s na penalização. É utilizado
+uma sequência de 100 valores escolhidos com base na escala da variável
+resposta e no método utilizado ($\alpha). Nos objetos de classe
+`cv.glmnet` temos a função `plot` que apresenta o critério utilizado
+para escolha do $\lambda$.
+
+```{r, fig.height = 4, fig.width = 10}
+
+par(mfrow = c(1, 3))
+plot(m0ridge); title("Ridge", line = 2.5)
+plot(m0lasso); title("Lasso", line = 2.5)
+plot(m0elnet); title("alpha = 0.5", line = 2.5)
+
+```
+
+```{r, include = FALSE}
+
+models <- list(m0ridge, m0lasso, m0elnet)
+lambdas.min <- c(m0ridge$lambda.min, m0lasso$lambda.min, m0elnet$lambda.min)
+lambdas.1se <- c(m0ridge$lambda.1se, m0lasso$lambda.1se, m0elnet$lambda.1se)
+
+```
+
+Com base nestes gráficos nota-se que o valor de $\lambda$ sugerido, que
+minimiza o erro de validação cruzada é `r paste(round(lambdas.min, 4),
+collapse = ", ")` para os modelos com penalização Ridge, Lasso, e
+Elastic Net ($\lambda = 0.5$), ainda é apresentado (segunda linha
+vertical) o maior valor de $\lambda$ que está no intervalo de um erro
+padrão do erro quadrático médio de validação que resultou nos valores
+`r paste(round(lambdas.1se, 4), collapse = ", ")`.
+
+## Comparação de ajustes ##
+
+Abaixo como comparação apresentamos os parâmetros estimados em ambos os
+métodos.
+
+Primeiro apresentamos abaixo a comparação dos coeficientes estimados
+utilizando o $\lambda$ que minimiza o erro de validação cruzada e o
+$\lambda$ máximo pertencente ao intervalo de um erro padrão do erro de
+validação cruzada.
+
+```{r, resultis = "asis"}
+
+## cbind(coef(m0lm), coef(m0ridge), coef(m0lasso), coef(m0elnet))
+
+coefRidge <- cbind("RIDGE-MIN" = coef(m0ridge, s = "lambda.min")[-2],
+                   "RIDGE-1SE" = coef(m0ridge, s = "lambda.1se")[-2])
+coefLasso <- cbind("LASSO-MIN" = coef(m0lasso, s = "lambda.min")[-2],
+                   "LASSO-1SE" = coef(m0lasso, s = "lambda.1se")[-2])
+coefElnet <- cbind("ELNET-MIN" = coef(m0elnet, s = "lambda.min")[-2],
+                   "ELNET-1SE" = coef(m0elnet, s = "lambda.1se")[-2])
+
+compareCoefs <- cbind(coefRidge, coefLasso, coefElnet)
+rownames(compareCoefs) <- coef(m0elnet)@Dimnames[[1]][-2]
+
+knitr::kable(compareCoefs, align = rep("c", 6), digits = 3)
+
+```
+
+Note na tabela que os valores, primeiramente olhando as colunas duas a
+duas (se foi pego o $\lambda$ mínimo - **-MIN** ou o maior dentro do
+intervalo de 1 erro padrão - **-1SE**), dentre essas duas alternativas
+não vemos uma diferença muito discrepante das estimativas, porém perceba
+que sempre em **-1SE** temos uma estimativa mais próxima de zero do que
+a fornecida por **-MIN**, pois nestes casos a penalização é
+maior. Escolheremos o maior $\lambda$, pois desejamos uma maior
+penalização. Agora comparando entre procedimentos de penalização
+**RIDGE**, **LASSO** e **ELNET** (com $\lambda$ = 0,5) notamos maior
+diferença nas estimativas, note que no caso **RIDGE** as estimativas
+chegam próxima a zero, porém não são nulas, já nos casos **LASSO** e
+**ELNET** a nulidade já ocorre para alguns parâmetros.
+
+Agora vamos a comparação com a tradicional metodologia já amplamente
+utilizada, a regressão gaussiana múltipla. Abaixo temos a comparação dos
+coeficientes estimatidas. Apresentamos somente as estimativas com
+penalização utilizando o maior $\lambda$ sugerido.
+
+```{r, resultis = "asis"}
+
+coeflm <- cbind("LM" = coef(m0lm))
+compareCoefs <- cbind(coeflm, compareCoefs[, seq(2, 6, 2)])
+colnames(compareCoefs) <- c("LINEAR", "RIDGE", "LASSO", "ELNET")
+
+knitr::kable(compareCoefs, align = rep("c", 4), digits = 3)
+
+```
+
+Os valores estimados são razoavelmente distintos, porém note que a
+regressão **LASSO** toma a nulidade do parâmetros relacionados as
+variáveis _GNP.deflator_, _GNP_ e _Population_. Verificando o teste de
+significância para estes parâmetros no modelo linear gaussiano temos:
+
+```{r}
+
+## summary(m0lm)
+
+## Para usar kable
+est = coef(summary(m0lm))[, "Estimate"]
+sdt = coef(summary(m0lm))[, "Std. Error"]
+tval = est/sdt
+pval = 2*pt(abs(tval), df = m0lm$df.residual, lower = FALSE)
+
+mysummary <- cbind(Estimate = est, Std.Error = sdt,
+                   "t value" = tval, "P(>|t|)" = pval)
+
+knitr::kable(mysummary, align = rep("c", 4), digits = 3)
+
+```
+
+Portanto, nota-se que a regressão por penalização **LASSO** fez, neste
+caso, o trabalho manual que seria de retirar estas as variáveis do
+modelo e reajustá-lo.
+
+# Informações da sessão R #
+
+```{r}
+cat(format(Sys.time(),
+           format = "Atualizado em %d de %B de %Y.\n\n"))
+sessionInfo()
+```

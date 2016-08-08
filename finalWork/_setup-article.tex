@@ -1,0 +1,72 @@
+\usepackage{lipsum}
+
+%% ======================================================================
+%% Pacotes usuais
+
+\usepackage[brazil]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{fourier}
+\usepackage{multicol}
+\usepackage{tikz}
+\usepackage{mathtools} %% Funcionalidades (como \dcases)
+\usepackage{dsfont}    %% Para \mathds{1} Indicadora
+\usepackage{setspace}
+\usepackage{tocloft}
+\usepackage[bottom]{footmisc}
+\usepackage{tabularx}
+\usepackage{threeparttable}
+\usepackage{multirow}
+\usepackage{float}
+
+\setlength{\cftbeforesecskip}{6pt}
+
+\DeclareMathOperator{\Ell}{\mathcal{L}}
+
+%% ======================================================================
+%% Cores para links
+\definecolor{url}{HTML}{000080}
+\definecolor{run}{HTML}{4A0082}
+\hypersetup{colorlinks, allcolors=., urlcolor=url, runcolor=run}
+
+%% =======================================================================
+%% Define negrito para os ambientes monoespaçados
+\definecolor{shadecolor}{RGB}{230,230,230}
+
+\usepackage{etoolbox}
+\makeatletter
+\preto{\@verbatim}{\topsep=1pt \partopsep=1pt }
+\makeatother
+
+\let\oldv\verbatim
+\let\oldendv\endverbatim
+
+\def\verbatim{\par\setbox0\vbox\bgroup\oldv}
+\def\endverbatim{\oldendv\egroup \hspace*{-1ex}
+    \fboxsep2pt \noindent\colorbox[gray]{0.8}{\usebox0}\par}
+
+
+%% =======================================================================
+%% Cabeçalho das páginas (era pra diferenciar entre páginas pares e
+%% ímpares, porém não está.)
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\renewcommand{\sectionmark}[1]{\markright{#1}}
+\fancyhead[RO]{Introdução ao Machine Learning}
+\fancyhead[LO]{\rightmark }
+\fancyhead[LE]{Introdução ao Machine Learning}
+\fancyhead[RE]{\rightmark }
+
+%% =======================================================================
+%% Define o título na página inicial
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}}     % Horizontal rule
+\title{
+  % \vspace{-1in}
+  \usefont{OT1}{bch}{b}{n}
+  \normalfont \normalsize
+  \textsc{CE064 - Introdução ao Machine Learning} \\ [20pt]
+  \horrule{0.5pt} \\[0.2cm]
+  \huge Estratégias para Classificação Binária \\
+            Um estudo de caso com classificação de e-mails
+  \horrule{2pt} \\[0.5cm]
+}

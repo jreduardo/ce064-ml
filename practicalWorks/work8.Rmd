@@ -1,0 +1,283 @@
+% Machine Learning - Text and Image Mining
+% Eduardo E. R. Junior - DEST/UFPR
+% `r format(Sys.time(), "%d de %B de %Y")`
+
+
+```{r, include = FALSE}
+source("_defs.R")
+```
+
+```{r, include = FALSE}
+
+library(knitr)
+opts_chunk$set(cache = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               fig.align = "center")
+
+```
+
+Nesse trabalho o objetivo é ilustrar uma aplicação de análise de
+texto. A principal, e mais desafiadora, tarefa em análise de texto e
+imagens é transformar dados não estruturados (e.g. textos, conteúdos de
+sites, imagens, etc.) em dados numéricos estruturados. A partir dos
+dados estruturados as análises já são bem estabelecidas na Estatística.
+
+O trabalho está organizado em XX seções onde mostra-se os recursos
+computacionais providos no _software_ R para manipulação e análise de
+texto. O texto a ser analisado é uma amostra dos _reviews_ americanos
+sobre o filme **O Rei Leão** (em inglês _The Lion King_).
+
+# Manipulando dados #
+
+Primeiramente vamos ler os dados, que foram disponibilizados em arquivo
+de texto pleno, veja o arquivo
+[reviews_TheLionKing](./data/reviews_TheLionKing).
+
+```{r}
+
+##-------------------------------------------
+## Lendo os dados
+
+daLines <- readLines("./data/reviews_TheLionKing")
+daLines <- daLines[nchar(daLines) > 3]
+
+```
+
+Note que os dados foram lidos linha a linha e as linhas com um número de
+caracteres menor que 3 foram descartadas, pois são aquelas que dividem
+os _reviews_.
+
+Com os dados devidamente carregados utilizamos os resursos do pacote
+`tm` (_Text Mining Package_), que trazem diversas funções para facilitar
+a manipulação de textos no _software_ R.
+
+```{r}
+
+##-------------------------------------------
+## Criando objeto para funções do pacote tm
+library(tm)
+doc <- Corpus(VectorSource(daLines))
+doc
+
+```
+
+Então no objeto `doc` temos nossos textos salvos no formato que o pacote
+`tm` requer, de classe ``r class(doc)[1]``. Para ver os métodos que o
+pacote `tm` disponibiliza para esta classe faça `methods(class =
+"VCorpus")`. Desses métodos temos que `tm_map(...)` é o essencial para
+manipulação do texto. Abaixo fazemos uso desse.
+
+```{r}
+
+##-------------------------------------------
+## Higienização do texto
+cleandoc <- tm_map(doc, content_transformer(tolower))
+cleandoc <- tm_map(cleandoc, removeWords, stopwords("english"))
+cleandoc <- tm_map(cleandoc, removePunctuation)
+cleandoc <- tm_map(cleandoc, stripWhitespace)
+cleandoc <- tm_map(cleandoc, removeNumbers)
+cleandoc <- tm_map(cleandoc, stemDocument)
+
+```
+
+E assim, como esse é um exemplo muito simples, terminados a manipulação
+preliminar do texto removendo todos os caracteres (pontuação, espaço,
+números, preposições, artigos, etc.) não importantes para informação
+transmitida pelo texto. Ainda deixamos somente o radical das palavras,
+para que palavras que exprimem o mesmo significado sejam mantidas com
+mesmo nome.
+
+Finalmente podemos transformar nossos dados de texto em número e então
+analisá-los. Os dados provenientes de texto, geralmente, são as
+frequências de ocorrências das palavras nos textos. No pacote `tm` a
+função `DocumentTermMatrix(...)` armazena os resumos numéricos do
+texto.
+
+```{r}
+
+##----------------------------------------------------------------------
+## Transformando texto em dados numéricos
+dtm <- DocumentTermMatrix(cleandoc)
+dtm
+
+```
+
+A partir do objeto `dtm` faremos as análises conforme apresentado nas
+próximas seções.
+
+# Análise de texto #
+
+## Descrição ##
+
+Para exibir os dados, primeiramente somamos as palavras em todos os
+textos e definimos um valor de corte, que representará a quantidade de
+palavras que serão exibidas nas análises realizadas no trabalho.
+
+```{r}
+
+## Descritiva geral
+ma <- as.matrix(dtm)
+freqs <- sort(colSums(ma), decreasing = TRUE)
+corte <- quantile(freqs, probs = 0.99)
+corte
+
+```
+
+ou seja, definimos que apenas 0,01 % das palavras (já higienizadas)
+serão importantes para exprimir a informação contida no texto, isso
+significa que trabalharemos apenas com palavras, cuja a frequência seja
+superior à `r corte`. Como veremos adiante essa percentagem é relevante
+quando se trabalha com texto. Abaixo temos as frequências das
+`r sum(freqs > corte)` palavras consideradas.
+
+```{r}
+
+library(lattice)
+library(latticeExtra)
+
+barchart(co ~ seq_along(co),
+         data = data.frame(co = freqs[freqs > corte]),
+         axis = axis.grid,
+         horizontal = FALSE,
+         scales = list(
+             x = list(rot = 45, labels = names(freqs)[freqs > corte])),
+         panel = function(x, y, ...) {
+             panel.barchart(x, y, ...)
+             panel.text(x, y + 2, y)
+         })
+
+```
+
+## Nuvem de palavras ##
+
+Como análise descritiva, mas que também serve para algumas tomadas de
+decisão temos a representação de nuvem de palavras, mas conhecida como
+_wordcloud_ do inglês. Abaixo temos a nuvem gerada com os _reviews_ do
+filme rei Leão.
+
+```{r}
+
+## Nuvem de palavras
+library(wordcloud)
+paleta <- brewer.pal(9, "Blues")[-(1:4)]
+wordcloud(words = names(freqs),
+          freq = freqs,
+          min.freq = 5,
+          random.order = F,
+          colors = paleta,
+          vfont = c("serif", "plain"))
+
+```
+
+Note que temos poucas palavras destacadas no centro da nuvem com cores
+mais escuras, ou seja, as que foram escritas mais vezes. Como dito
+anteriormente, em análise de textos são poucas as palavras que trazem
+informação relevante sobre o texto como um todo.
+
+## Associação de palavras ##
+
+Outra ferramente muito útil para análise de texto é o estudo de palavras
+correlacionadas ou associadas. Isso é de extrema relevância por algumas
+palavras ganham outro sentido caso sejam precedidas ou sucedidas por
+outras. Suponha, por exemplo em português, que a palavra `muito` tenha
+sido destacada com uma frequência alta, se ela estiver fortemente
+relacionada com a palavra `bom` é um indicativo positivo do objeto em
+análise, mas caso esteja relacionada com a palavra `curto` a
+interpretação é diferente. A análise de associação das palavras nos
+_reviews_ de Rei Leão é expressa na figura abaixo.
+
+
+```{r}
+
+cols <- trellis.par.get("superpose.line")$col
+
+## Associação de palavras
+attrs <- list(
+    node = list(
+        fontsize = 18, fontcolor = cols[2], shape = "plaintext"))
+
+library(Rgraphviz)
+freq.terms <- findFreqTerms(dtm, lowfreq = corte)
+plot(dtm, term = freq.terms, corThreshold = 0.4,
+     weighting = TRUE, attrs = attrs)
+
+
+```
+
+Na figura a largura das linhas representa a intensidade da relação, mas
+somente as associações entre as `sum(freqs > corte)` palavras que tem
+frequência maior que `r corte` são exibidas. Note a forte correlação de
+`king` com `lion`, como sabemos que estas duas palavras se referem ao
+nome do filme poderíamos substituí-las por uma única palavra, `lionking`
+por exemplo, e refazer as análises. Nas demais palavras correlacionadas
+notamos que `charact` é relaciona no texto com `disney`, `film`, `like`,
+`anim` indicando que os espectadores do filme gostaram dos personagens
+do disney representados no filme.
+
+Uma palavra interessante de se observar a relação com outras é `like`,
+assim conseguiremos observar de quais elementos do filme as pessoas que
+escreveram os _reviews_ gostaram.
+
+```{r}
+
+## Palavras associadas com `charact`
+findAssocs(dtm, "like", 0.75)
+
+```
+
+## Agrupamento de palavras ##
+
+Complementar à associação de palavras podemos também tentar agrupar
+palavras. Esse agrupamento, feito por uma regra lógica adotado, informa
+sobre quais características são percebidas conjuntamente, assim
+espera-se que melhorando um aspecto do filme as características
+agrupadas a este serão alteradas.
+
+No caso dos _reviews_ realizou-se o agrupamento de palavras via método
+_Ward_ que consiste na maximização da homogeneidade dentro dos
+grupos. O resultado é apresentado na figura abaixo.
+
+```{r}
+
+## Agrupamento de palavras
+k = 4 ## Decisão não automatizada, para agrupamento herárquico
+mdist <- dist(scale(t(ma[, colSums(ma) > corte])))
+agrup <- hclust(mdist, method = "ward.D")
+
+library(dendextend)
+dchart <- color_branches(as.dendrogram(agrup), k = k, col = cols[1:k])
+dchart <- color_labels(dchart, k = k, col = cols[1:k])
+plot(dchart)
+rect.dendrogram(as.dendrogram(agrup), k = k, lty = 2,
+                border = "gray30")
+
+```
+
+Um inconveniente dos métodos hierárquicos clássicos de agrupamente é que
+a formação de grupos não é automatizada, assim a cada nova inclusão de
+dados na base se faz necessária a intervenção humana para escolha do
+número de grupos. Há propostas que fazem a escolha do número de grupos
+de forma automática via cálculos feitos nas matrizes de distâncias.
+
+Note que no agrupamento os grupos formados foram interessantes, por
+exemplo `film` e `movi` são palavras relevantes. Porém como aparecem
+sempre em contextos distintos tornan-se grupos de um só elemento. Já no
+grupo à esquerda temos os elementos `disney`, `lion` e `king`, ou seja,
+um agrupamento que não nos informa nada sobre a qualidade do filme. E
+por último o grupo com o maior número de elementos onde temos `simba`,
+`like`, `charact` e `anim` como alguns elementos.
+
+Diante das análises realizadas podemos dizer que há evidências nos
+_reviews_ que indicam a boa avaliação dos espectadores com relação ao
+filme. Ainda imagina-se que alguns elementos do filme que influenciaram
+na boa avaliação do público foram os personagens, como simba, e a
+animação em geral.
+
+# Informações da sessão R #
+
+```{r}
+cat(format(Sys.time(),
+           format = "Atualizado em %d de %B de %Y.\n\n"))
+sessionInfo()
+```
