@@ -6,6 +6,8 @@ output:
     theme: yeti
     highlight: tango
     css: _style-pages.css
+    includes:
+      after_body: _include-footer.html
 navbar:
   left:
     - text: Home
