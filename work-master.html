@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+<meta name="author" content="Eduardo Elias Ribeiro Junior" />
+
+
+<title>Estratégias para Classificação Binária</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<link href="site_libs/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="_style-pages.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 45px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+
+.section h2 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h3 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h4 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h5 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+.section h6 {
+  padding-top: 50px;
+  margin-top: -50px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Trabalhos práticos
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="work1.html">Regressão Linear</a>
+    </li>
+    <li>
+      <a href="work2.html">Gradiente Descentente</a>
+    </li>
+    <li>
+      <a href="work3.html">Regularização: Penalização Ridge e Lasso</a>
+    </li>
+    <li>
+      <a href="work4.html">Cross Validation e Bootstrap</a>
+    </li>
+    <li>
+      <a href="work5.html">Métodos de Classificação Supervisionados</a>
+    </li>
+    <li>
+      <a href="work6.html">Support Vector Machine</a>
+    </li>
+    <li>
+      <a href="work8.html">Text and Image Mining</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="work-master.pdf">Trabalho final</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://jreduardo.github.io/">Eduardo Jr's website</a>
+</li>
+<li>
+  <a href="https://github.com/JrEduardo/ce064-ml">
+    <span class="fa fa-github-alt fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Estratégias para Classificação Binária</h1>
+<h4 class="author"><em>Eduardo Elias Ribeiro Junior</em></h4>
+<h4 class="date"><em>11 de agosto de 2016</em></h4>
+
+</div>
+
+
+<!--------------------------------------------- -->
+<!-- Resumo do trabalho -->
+<!--------------------------------------------- -->
+\begin{abstract}
+
+Em Machine Learning têm-se em diversas situações o interesse em realizar
+predições a partir de algoritmos computacionais que independam da ação
+humana. Uma das mais comuns tarefas preditivas no campo aplicado é a de
+classificação. Neste trabalho apresentamos um rol de técnicas de
+classificação binária aplicadas a um conjunto de dados do repositório
+UCI Machine Learning que refere-se a classificação de e-mails em
+\texttt{spam} ou \texttt{não-spam}. As técnicas de classificação
+apresentadas e aplicadas permeiam os campos de Estatística Multivariada,
+Machine Learning e Inferência Paramétrica. Foram ao todo 11 técnicas de
+classificadas sob o qual a abordagem via Random Forest (árvores de
+decisão aleatórias) apresentou o melhor desempenho considerando resumos
+da curva ROC obtidos de classificações na base de teste e nas amostras
+de validação cruzada.
+
+\vspace{0.2cm}
+\begin{minipage}{13.5cm}
+\textbf{Palavras-chave: }{\it Classificação, Análise Discriminante,
+Regressão Logística, Árvores de decisão, Random Forest, Bagging,
+Boosting, SVM}.
+\end{minipage}
+
+\end{abstract}
+<!--------------------------------------------- -->
+<!-- Sumário - tabela de conteúdo  -->
+<!--------------------------------------------- -->
+<p></p>
+<div id="introducao" class="section level1">
+<h1>Introdução</h1>
+<p>Em Estatística aplicada pode-se destacar dois principais interesses a cerca da análise de dados, são eles: i) Compreender o relacionamento entre variáveis de interesse e características de uma amostra e; ii) Realizar predições por meio de métodos estatísticos ajustados por dados de uma amostra.</p>
+<p>Na área de Aprendizado de Máquina (Machine Learning), o segundo tópico citado é predominante. Nessa área têm-se interesse em obter algoritmos computacionais que independam da ação humana, ou seja, que permitam o computador aprender. Para tal finalidade diversas ferramentas foram propostas não se restringindo a modelagem estatísticas da forma convencional (adotando um modelo de probabilidades para a variável de interesse condicionada às covariáveis, cuja há uma relação funcional entre essas variáveis). <span class="citation">BREIMAN (2001)</span> discute a excessiva utilização de modelos estatísticos em contraste com as abordagens presentes no aprendizado de máquina.</p>
+<p>Tanto em Aprendizado de Máquina quanto na Estatística em geral, no contexto univariado, as ferramentas para análise são específicas à classe da variável resposta. Para variáveis quantitativas (contínuas ou discretas) têm-se interesse em predizer o valor da variável para uma nova observação não presente na amostra, e.g. o preço de uma ação do mercado financeiro, já para variáveis qualitativas o interesse está na classificação de novas observações nas classes da variável em estudo, e.g. classificar o estado de uma doença.</p>
+<p>Neste trabalho aborda-se estratégias para classificação no caso de uma variável qualitativa binária, que contém apenas duas classificações. Essas estratégias permeiam os campos de modelagem estatística da forma convencional e algoritmos da área de aprendizado de máquina. Essas abordagens são descritas na Seção . O conjunto de dados, sob o qual aplica-se os métodos para classificação, refere-se a e-mails recebidos por funcionários de uma empresa onde deseja-se classificá-los como spams ou não-spams, detalhes sobre o conjunto de dados são descritos na Seção .</p>
+<p>Após a aplicação dos métodos é de interesse no trabalho avaliar o desempenho dos classificadores e os compará-los quanto ao poder preditivo. Para tal finalidade explora-se a curve ROC (<em>Receiver Operating Characteristic</em>), um popular gráfico de exibe simultaneamente os dois tipos de erros em todos os limites possíveis <span class="citation">(JAMES et al., 2013)</span>. Resumos obtidos a partir desta curva são utilizados para comparação de classificadores, em geral o valor de AUC (<em>Area Under Curve</em>) é exaustivamente apresentado e utilizado como critério de avaliação.</p>
+<p>O trabalho é organizado em cinco seções. Na Seção  contextualiza-se o problema de classificação e as abordagens usualmente aplicadas. Na seção  o conjunto de dados e os métodos para obtenção dos classificadores são apresentados. A seção  é destinada à exibição e comparação dos resultados obtidos dos classificadores ajustados, ainda nesta seção discuti-se particularidades nos resultados e identifica-se o melhor classificador para o conjunto de dados em análise. Na seção  são apresentados as conclusões obtidas no estudo e alguns possíveis tópicos que ainda podem ser abordados. Na seção  as referências bibliográficas que embasam o estudo são apresentadas.</p>
+</div>
+<div id="material-e-metodos" class="section level1">
+<h1>Material e Métodos</h1>
+<p>Para aplicação e competição dos métodos de classificação, que são descritos adiante, considerou-se o conjunto de dados disponibilizado por George Forman no repositório UC Irvine Machine Learning <span class="citation">(LICHMAN, 2013)</span>. Os dados referem-se a mensagens de e-mails recebidas por funcionários da empresa Hewlett-Packard - HP<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>, cujo principal objetivo é obter um bom classificador de mensagens para <strong>spams</strong>, e-mails indesejados (anúncios de sites de produtos, propostas para dinheiro rápido, correntes, pornografia, entre outros), ou <strong>não-spams</strong>.</p>
+\begin{multicols}{2}
+
+No conjunto de dados há 4601 e-mails registrados e para cada
+e-mail têm-se a informação de sua classificação como spam ou não-spam. A
+proporção de spams é exibida na Figura \ref{fig:pie}, onde nota-se que a
+maioria dos e-mails são não-spam. Porém, o percentual de e-mails
+classificados como spams não é tão baixo, em números absolutos são
+1813, o que viabiliza a aplicação de métodos para
+classificação.
+
+Além da informação sobre a classificação do e-mail também são
+disponibilizadas outras informações com características do e-mail. Todas
+as variáveis presentes no conjunto de dados são descritas na Tabela
+\ref{tab:dados}. São 58 variáveis, sendo que 48 delas se
+referem ao percentual de ocorrência de uma palavra no e-mail,
+e.g. \texttt{make} representa o percentual de ocorrências da palavra
+&quot;make&quot;. Para essas variáveis há um considerável excesso de zeros.
+
+&lt;div class=&quot;figure&quot; style=&quot;text-align: center&quot;&gt;
+&lt;img src=&quot;work-master_files/figure-html/pie-1.png&quot; alt=&quot;Proporção de e-mails classificados como spams e não-spams&quot; width=&quot;0.4\textwidth&quot; /&gt;
+&lt;p class=&quot;caption&quot;&gt;Proporção de e-mails classificados como spams e não-spams&lt;/p&gt;
+&lt;/div&gt;
+
+\end{multicols}
+<p>Para evitar a escolha de classificadores que ajustem de forma demasiada à amostra sob a qual foram treinados (<em>overfit</em>), adotou-se a divisão aleatória do conjunto de dados. Duas bases foram constituídas, uma para ajuste dos classificadores com 70% dos e-mails (3220) e outra com 30% (1381 e-mails) para avaliar o desempenho dos classificadores ajustados. Como tentativa de preservar as características dos e-mails na base de treino, manteve-se o mesmo percentual de spams e não-spams nas partições do conjunto de dados.</p>
+\begin{table}[h]
+\normalsize
+\caption{Descrição das variáveis disponíveis no conjunto de dados}
+\label{tab:dados}
+{\renewcommand{\arraystretch}{1.5}
+\begin{tabularx}{\textwidth}{XXc}
+\hline
+{\bf Informação provida} &amp; {\bf Variáveis} &amp; {\bf Tipo} \\
+\hline
+Percentual de ocorrências da palavra no e-mail &amp; \texttt{make}, \texttt{address}, \texttt{all}, \texttt{num3d}, \texttt{our}, \texttt{over}, \texttt{remove}, \texttt{internet}, \texttt{order}, \texttt{mail}, \texttt{receive}, \texttt{will}, \texttt{people}, \texttt{report}, \texttt{addresses}, \texttt{...} &amp; númerica \\
+Percentual de ocorrências do caractere no e-mail &amp; \texttt{charSemicolon}, \texttt{charRoundbracket}, \texttt{charSquarebracket}, \texttt{charExclamation}, \texttt{charDollar}, \texttt{charHash} &amp; númerica \\
+Comprimento médio das sequencias com letras maiúsculas &amp; \texttt{capitalAve} &amp; númerica \\
+Comprimento da maior sequencia com letras maiúsculas &amp; \texttt{capitalLong} &amp; númerica \\
+Número total de letras maiúsculas no e-mail &amp; \texttt{capitalTotal} &amp; númerica \\
+Classificação do e-mail em spam &amp; \texttt{type} &amp; binária \\
+\hline
+\end{tabularx}
+}
+\end{table}
+<p>Para obtenção dos classificadores são utilizados métodos de classificação que foram seccionados em quatro grandes grupos da área, os métodos fundamentados em: <strong>Discriminant Analysis</strong>; <strong>Generalized Linear Model</strong>; <strong>Classification Trees</strong>; e <strong>Support Vetor Machine</strong>. A seguir esses métodos são brevemente descritos.</p>
+\subsubsection*{Discriminant Analysis}
+<p>A análise discriminante é uma técnica da estatística multivariada que surgiu das contribuições de Fisher à área. É uma das técnicas mais antigas e mais empregadas para classificação.</p>
+<p>Seja <span class="math inline">\(\Omega_1, \Omega_2, \ldots, \Omega_g\)</span> populações assume-se que são normalmente distribuídas com vetores de média desconhecidos e mesma matriz de covariâncias. Ainda, considere <span class="math inline">\(X_j\)</span> a matriz de dimensão <span class="math inline">\(n_j \times p\)</span>, com as <span class="math inline">\(p\)</span> covariáveis das <span class="math inline">\(n_j\)</span> observações pertencentes à j-ésima amostra. A regra de classificação será <span class="math display">\[\textrm{alocar } x
+\textrm{ para } \Omega_j \textrm{ se } j =
+\underset{i \in (1, 2, \ldots, g)}{\textrm{arg max}} \left \{
+\log(\pi_i) - \frac{1}{2} (x-\bar{x})^t \Sigma^{-1} (x - \bar{x})
+\right \} \]</span> em que <span class="math inline">\(\pi_i\)</span> é uma probabilidade a priori de que a observação sob teste pertença a população <span class="math inline">\(\Omega_i\)</span>, neste trabalho adotaremos como probabilidade a priori a proporção de observações em cada população. Esse classificador é chamado de discriminante linear de Fisher.</p>
+<p>Uma variação do discriminante linear ocorre quando não se considera que as matrizes de variância e covariância são iguais e assim a função que determina a regra de decisão ganha mais um termo flexibilizando a fronteira de decisão.</p>
+<p>Além dos métodos de análise discriminante linear e quadrática também serão abordados alguns métodos relativamente mais recentes para obtenção de classificadores fundamentados em análise discriminante, são eles <strong>Análise Discriminante Regularizada - RDA</strong> (do inglês <em>Regularized Discriminante Analysis</em>) e <strong>Análise Discriminante Penalizada - PDA</strong> (do inglês <em>Penalized Dicriminant Analysis</em>). Para RDA adiciona-se dois parâmetros, que são arbitrariamente escolhidos, à função que determina a regra de decisão. Estes parâmetros ponderam essa função flexibilizando sua forma. Na metodologia PDA atribui-se penalidades aos vetores discriminantes de Fisher, ou seja, maximiza-se o núcleo da verossimilhança para cada grupo sujeito a uma restrição imposta arbitrariamente. Essa abordagem surgiu para problemas <em>“small <span class="math inline">\(n\)</span> large <span class="math inline">\(p\)</span>”</em>, portanto nas aplicações para esse conjunto de dados não espera-se grandes diferenças. Porém ressalta-se que este método é de grande valia, pois em casos <span class="math inline">\(p &gt; n\)</span> as outras abordagens não funcionam.</p>
+\subsubsection*{Generalized Linear Model}
+<p>Dos modelos pertencentes a classe dos modelos lineares generalizados (<em>Generalized Linear Models</em>) será utilizados somente o modelo denominado modelo logístico, cujo a distribuição considerada para a relação condicional <span class="math inline">\(Y \mid X\)</span> é Binomial(<span class="math inline">\(m\)</span>, <span class="math inline">\(\pi\)</span>) e função de ligação logito (que dá nome ao modelo). Assim o modelo pode ser escrito, juntamente com sua função de verossimilhança a ser maximizada, conforme abaixo:</p>
+\begin{multicols}{2}
+$$
+\begin{aligned}
+    Y \mid X_i \sim \textrm{Binomial}(m_i, \, \pi_i) \\
+    \log \left ( \frac{\pi}{ 1 - \pi} \right ) = X\beta
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\Ell(\beta; \underline{y}) = \prod_{i=1}^{n} \pi_i^{y_i}
+    (1-\pi_i)^{1-y_i} \\
+\end{aligned}
+$$
+\end{multicols}
+<p>sendo <span class="math inline">\(\pi_i = \frac{e^{x_i \beta}}{e^{x_i \beta}+1}\)</span>. Assim obtendo as estimativas dos <span class="math inline">\(\beta\)</span>’s a partir da maximização de <span class="math inline">\(\Ell\)</span> podemos calcular <span class="math inline">\(\pi_i\)</span>. A classificação do i-ésimo indivíduo seguirá a regra: se <span class="math inline">\(\pi_i &lt; p_c\)</span>, classifica no grupo 0 e se <span class="math inline">\(\pi_i \geq p_c\)</span> classifica no grupo 1. O valor de <span class="math inline">\(p_c\)</span> é arbitrário, porém pode-se escolher o valor de <span class="math inline">\(p_c\)</span> que confere a maior especificidade e sensibilidade.</p>
+<p>Neste trabalho aborda-se também a estimação dos parâmetros utilizando a metodologia de <em>Gradiente Boosting</em> que, de forma resumida, reponderam iterativamente a amostra atribuindo maiores pesos às observações classificadas de forma incorreta na iteração anterior <span class="citation">HOFNER et al. (2014)</span>.</p>
+\subsubsection*{Classification Trees}
+<p>Os métodos de classificação fundamentos em árvores de decisão ganharam espaço no campo da Estatística aplicada, principalmente, a partir dos anos de 1990. Esse método é uma extensão dos modelos de regressão e não é restrito à classificação. Em síntese o método se baseia na estratificação binária das covariáveis que levam a decisões, conforme ilustrado na Figura .</p>
+\begin{multicols}{2}
+
+Neste trabalho serão utilizados métodos de classificação que aprimoram
+as árvores de decisão. O primeiro deles é o procedimento
+\textbf{bagging} que consiste em reamostrar os dados de treino, obter um
+classificar para cada conjunto reamostrado e tomar como novo desfecho
+dos nós terminais as classes modais das reamostras classificadas. Com
+isso diminui-se a variância do classificador. Uma modificação no
+procedimento de bagging, fazendo com que cada árvore gerada pelas
+reamostras tenha preditores distintos, leva o nome de \textbf{Random
+Forest} que também serão aplicadas.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.37\textwidth]{images/ilustratree}
+\caption{Ilustração de árvores de decisão}
+\label{fig:ilustratree}
+\end{figure}
+
+\end{multicols}
+\subsubsection*{Support Vector Machines}
+<p>Os métodos de classificação baseados em Support Vector Machines - SVM são construídos basicamente pela interpretação geométrica do problema. Dispondo as observações de um problema de classificação em um hiperplano de dimensão <span class="math inline">\(p\)</span>, SVM procuram maximizar as margens do subespaço <span class="math inline">\(p-1\)</span> desse hiperplano que melhor separam as observações.</p>
+<p>Neste trabalho serão aplicados os métodos chamados de Support Vector Classifier que permitem classificações incorretas com relação às margens por meio de um parâmetro adicional <span class="math inline">\(C\)</span> que define a magnitude total deste erro. Além disso, também serão obtidos classificadores SVM com diferentes núcleos (<em>kernels</em>) conforme exibido abaixo:</p>
+<ul>
+<li>Linear: <span class="math inline">\(K(x_i, x_k) = \left \langle x_i, \, x_k \right \rangle\)</span></li>
+<li>Polinomial: <span class="math inline">\(K(x_i, x_k) = (1 + \gamma \left \langle x_i, \, x_k  \right \rangle)^d\)</span></li>
+<li>Gaussiano: <span class="math inline">\(K(x_i, x_k) = \exp(-\sigma \left \| x_i, \, x_k \right  \|^2 )\)</span></li>
+</ul>
+<p>Os parâmetros que definem as expansões kernel são arbitrários. Nas análises se faz a avaliações de classificadores com diferentes valores dos parâmetros para escolhê-los.</p>
+<p>Para comparação dos classificadores obtidos com os diferentes métodos apresentados será feita a avaliação da curva ROC construída com os resultados das classificações na base de teste. Resumos da curva ROC, como a área abaixo da curva - AUC, acurácia, sensibilidade, especificidade, valor preditivo positivo - PPV (<em>Positive Predictive Values</em>) e negativo - NPV (<em>Negative Predictive Values</em>) são utilizados. Abaixo exibe-se os cálculos para cada um deles, conforme <span class="citation">KUHN (2008)</span>.</p>
+\begin{multicols}{2}
+
+Considere a seguinte matriz de classificação.
+
+\begin{table}[H]
+\begin{tabular}{lcc}
+\hline
+\multirow{2}{*}{\bf Observado} &amp; \multicolumn{2}{c}{\bf Predito} \\
+\cline{2-3}
+               &amp; {\tt não-spam} &amp; {\tt spam} \\
+\hline
+{\tt não-spam} &amp;       A        &amp;      C     \\
+{\tt spam}     &amp;       B        &amp;      D     \\
+\hline
+\end{tabular}
+\end{table}
+
+\columnbreak
+
+\begin{itemize}
+    \item {\tt acurácia} $= \frac{A+D}{A+B+C+D}$
+    \item {\tt sensibilidade} $= \frac{A}{A+C}$
+    \item {\tt especificidade} $= \frac{D}{B+D}$
+    \item {\tt PPV} $= \frac{A}{A+B}$
+    \item {\tt NPV} $= \frac{D}{C+D}$
+\end{itemize}
+
+\end{multicols}
+<p>A <code>AUC</code> é calculada conforme utilizando o método de integração por trapézios.</p>
+<p>No trabalho também se faz uso do procedimento de validação cruzada <em>10-fold</em>, ou seja, ainda na base de treinamento se divide a amostra em dez partes utilizando 9 para ajuste do classificador e uma para avaliação. Isso é feito considerando 10 vezes, considerando um conjunto de 9 amostras diferentes a cada vez. Ainda repete-se esse procedimento 3 vezes para minimizar o erro de escolha de um classificador sobreajustado. Assim têm-se 31 classificadores para cada técnica aplicada, 30 referentes as amostras da validação cruzada e 1 considerando toda a base de treinamento.</p>
+</div>
+<div id="resultados" class="section level1">
+<h1>Resultados</h1>
+<p>Nesta seção são apresentados e discutidos os resultados provenientes dos classificadores, obtidos com os métodos citados na Seção , aplicados no conjunto de teste.</p>
+<p>Primeiramente são apresentados e comparados os classificadores de mesma do mesmo grupo, o classificador que obteve o melhor desempenho na comparação dentro do grupo foi mantido para comparação posterior entre os grupos.</p>
+<p>Todas as análises são realizadas com o pacote <code>caret</code> do R, que é um <em>wrapper</em> para outros pacotes do R. A facilidade de utilizar as funções deste pacote é que os resultados são padronizados facilitando a comparação.</p>
+<div id="discriminant-analysis-based" class="section level2">
+<h2>Discriminant Analysis-Based</h2>
+<p>Os classificadores ajustados com base na metodologia de análise discriminante são:</p>
+<ul>
+<li><code>LDA</code>: Linear Discriminant Analysis</li>
+<li><code>QDA</code>: Quadratic Discriminant Analysis</li>
+<li><code>RDA</code>: Regularized Discriminant Analysis</li>
+<li><code>PDA</code>: Penalized Discriminant Analysis</li>
+</ul>
+<p>Foram testados diferentes valores para os parâmetros <span class="math inline">\(\lambda\)</span> e <span class="math inline">\(\gamma\)</span>, na <code>RDA</code> e diferentes <span class="math inline">\(\lambda\)</span> na <code>PDA</code>, a fim de se obter o conjunto de parâmetros ótimos, o chamado <em>tunning</em> em Aprendizado de Máquina.</p>
+<div class="figure" style="text-align: center">
+<img src="work-master_files/figure-html/grafDB-1.png" alt="(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste." width="0.95\textwidth" />
+<p class="caption">
+(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste.
+</p>
+</div>
+<p>Observando a Figura , não há nenhum método que se destaca. Os intervalos de confiança construídos a partir das 30 classificações feita na validação cruzada se sobrepões e os valores médios de AUC são muito próximos. Considerando as curvas ROC dos classificadores com todas as observações da base de treinamento, também não há grandes diferenças, destaca-se apenas uma menor sensibilidade quando considerado o classificador <code>QDA</code>, conforme pode ser visto na Tabela .</p>
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores fundamentados em
+Análise Discriminante}
+\label{tab:DB}
+\begin{tabular}{lcccc}
+\hline
+{\bf Medida} &amp; {\bf LDA} &amp; {\bf QDA} &amp; {\bf RDA} &amp; {\bf PDA} \\
+\hline
+% latex table generated in R 3.3.1 by xtable 1.8-2 package
+% Mon Aug  8 01:50:52 2016
+ AUC* &amp; 0,947 (0,943, 0,952) &amp; 0,943 (0,937, 0,948) &amp; 0,946 (0,94, 0,952) &amp; 0,947 (0,943, 0,952) \\ 
+  Acurácia* &amp; 0,899 (0,882, 0,915) &amp; 0,825 (0,804, 0,844) &amp; 0,906 (0,889, 0,921) &amp; 0,899 (0,882, 0,915) \\ 
+   \hline Sensibilidade &amp; 0,955 &amp; 0,744 &amp; 0,941 &amp; 0,955 \\ 
+  Especificidade &amp; 0,814 &amp; 0,949 &amp; 0,851 &amp; 0,814 \\ 
+  PPV &amp; 0,888 &amp; 0,957 &amp; 0,907 &amp; 0,888 \\ 
+  NPV &amp; 0,921 &amp; 0,707 &amp; 0,904 &amp; 0,921 \\ 
+  AUC &amp; 0,956 &amp; 0,948 &amp; 0,952 &amp; 0,956 \\ 
+  
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+<p>Outro resultado que chama a atenção é a similaridade dos resultados de <code>LDA</code> e <code>PDA</code>. Isso pode ser atribuído ao fato de que não há grande número de covariáveis na base ao ponto que as penalidades não afetam significativamente o ajuste do classificador.</p>
+<p>Assim adotamos como classificador representante da abordagem por análise discriminante o <code>LDA</code>.</p>
+</div>
+<div id="generalized-linear-model-based" class="section level2">
+<h2>Generalized Linear Model-Based</h2>
+<p>Para os classificadores baseados em modelos lineares generalizados são tomados duas abordagens:</p>
+<ul>
+<li><code>GLM-MLE</code>: Generalized Linear Models ajustado via maxima verossimilhança; e</li>
+<li><code>GLM-Boost</code>: Gradiente Boosting aplicado em GLM</li>
+</ul>
+<p>Para a abordagem Boosting também realizou-se o <em>tunning</em> para o parâmetro <code>mstop</code> que determina o número de iterações. O valor que forneceu o melhor desempenho foi de 100 iterações.</p>
+<div class="figure" style="text-align: center">
+<img src="work-master_files/figure-html/grafGB-1.png" alt="(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste." width="0.95\textwidth" />
+<p class="caption">
+(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste.
+</p>
+</div>
+<p>Na avaliação dos dois classificadores nota-se uma grande diferença de desempenho em favor do método via máxima verossimilhança tradicional. Isso pode ser observado tanto na Figura , onde apresenta-se os intervalos de confiança baseados nas classificações de validação cruzada para AUC e as curvas ROC, quanto na Tabela  que contém os resumos da curva ROC.</p>
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores fundamentados em
+Modelos Lineares Generalizados}
+\label{tab:GB}
+\begin{tabular}{lcc}
+\hline
+{\bf Medida} &amp; {\bf GLM-MLE} &amp; {\bf GLM-Boost} \\
+\hline
+% latex table generated in R 3.3.1 by xtable 1.8-2 package
+% Mon Aug  8 01:50:57 2016
+ AUC* &amp; 0,969 (0,966, 0,972) &amp; 0,943 (0,938, 0,947) \\ 
+  Acurácia* &amp; 0,927 (0,912, 0,94) &amp; 0,865 (0,845, 0,882) \\ 
+   \hline Sensibilidade &amp; 0,949 &amp; 0,955 \\ 
+  Especificidade &amp; 0,893 &amp; 0,726 \\ 
+  PPV &amp; 0,932 &amp; 0,843 \\ 
+  NPV &amp; 0,919 &amp; 0,912 \\ 
+  AUC &amp; 0,974 &amp; 0,945 \\ 
+  
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+<p>A superioridade da abordagem convencional de estimação dos parâmetros do modelo linear generalizado é particular desta análise. Em investigações do fato, pode-se atribuir esse melhor desempenho ao bom comportamento do conjunto de dados, eles são linearmente separáveis, desfavorecendo assim o método Boosting.</p>
+<p>Portanto, para representar a abordagem via modelos lineares generalizados o classificador <code>GLM-MLE</code> é mantido.</p>
+</div>
+<div id="classification-trees-based" class="section level2">
+<h2>Classification Trees-Based</h2>
+<p>Considerando agora os métodos baseados em árvores de decisão, são apresentados os resultados referentes as seguintes abordagens:</p>
+<ul>
+<li><code>Tree-BAG</code>: Bagging Classification Trees</li>
+<li><code>Rand-Forest</code>: Random Forest</li>
+</ul>
+<p>Das abordagens tratadas apenas para em Random Forest realizou-se o <em>tunning</em>. Este foi feito para o parâmetro <code>mtry</code> que representa o número de variáveis aleatórias escolhidas em cada divisão da amostra, o valor de melhor desempenho foi de 29 variáveis. Não foi realizada a “poda”, ou <em>prune</em> em inglês, das árvores.</p>
+<div class="figure" style="text-align: center">
+<img src="work-master_files/figure-html/grafTB-1.png" alt="(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste." width="0.95\textwidth" />
+<p class="caption">
+(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste.
+</p>
+</div>
+<p>Para os resultados exibidos na Figura  nota-se uma dissimilaridade entre os intervalos de AUC baseados nas 30 classificações da validação cruzada (à esquerda) e a curva ROC de classificação da base de teste com o classificador ajustado com todos as observações da base de treinamento. O classificador <code>Rand-Forest</code> apresentou um melhor desempenho na validação cruzada, quando comparado com o <code>Tree-bag</code>, isso se reflete nos intervalos de confiança para AUC que não se sobrepõe. Porém quando utilizado toda a base de treinamento os resultados praticamente se equivalem, note a similaridade entre as curvas ROC à direita na Figura . Essa semelhança também é observada nos valores pontuais da curva ROC na Tabela . Na Tabela os valores pontuais apresentam um ligeiro melhor desempenho para o classificador <code>Tree-BAG</code>, mas quando observado o desempenho na validação cruzada o classificador <code>Rand-Forest</code> se sobressai.</p>
+<p>Assim, adotando o critério de melhor desempenho na validação cruzada mantemos o classificador <code>Rand-Forest</code> para comparação finais com os demais métodos.</p>
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores fundamentados em
+Árvores de decisão}
+\label{tab:GB}
+\begin{tabular}{lcc}
+\hline
+{\bf Medida} &amp; {\bf Tree-BAG} &amp; {\bf Random-Forest} \\
+\hline
+% latex table generated in R 3.3.1 by xtable 1.8-2 package
+% Mon Aug  8 01:51:12 2016
+ AUC* &amp; 0,976 (0,972, 0,979) &amp; 0,983 (0,981, 0,986) \\ 
+  Acurácia* &amp; 0,956 (0,944, 0,966) &amp; 0,951 (0,939, 0,962) \\ 
+   \hline Sensibilidade &amp; 0,973 &amp; 0,965 \\ 
+  Especificidade &amp; 0,93 &amp; 0,93 \\ 
+  PPV &amp; 0,955 &amp; 0,955 \\ 
+  NPV &amp; 0,957 &amp; 0,946 \\ 
+  AUC &amp; 0,976 &amp; 0,979 \\ 
+  
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+</div>
+<div id="support-vetor-machine-based" class="section level2">
+<h2>Support Vetor Machine-Based</h2>
+<p>Finalmente no último grupo de métodos considerados no trabalho têm-se os resultados para os classificadores baseados em Support Vector Machines. Foram ajustados os classificadores considerando o kernel Linear e as expandindo as características das observações através dos kernels Polinomial e Gaussiano.</p>
+<ul>
+<li><code>SVM-Linear</code>: Support Vector Classifier com kernel Linear;</li>
+<li><code>SVM-Poly</code>: Support Vector Classifier com kernel Polinomial; e</li>
+<li><code>SVM-Gauss</code>: Support Vector Classifier com kernel Gaussiano.</li>
+</ul>
+<p>Para todos os cados realiza-se o <em>tunning</em> do parâmetro <code>C</code> que determina o custo de classificação incorreta. Quando considerada a expansão via kernel polinomial também se faz o tunning dos parâmetros <code>degree</code> (<span class="math inline">\(d\)</span>) e <code>scale</code> (<span class="math inline">\(\gamma\)</span>), conjuntamente com o <code>C</code>, os parâmetros foram fixados em <code>degree</code> = 2, <code>scale</code> = 0,01 e <code>C</code> = 1. Para a expansão via expansão Gaussiana o parâmetro <code>sigma</code> (<span class="math inline">\(\sigma\)</span>) foi fixado em 0,0282 com <code>C</code> = 4. No kernel linear o <code>C</code> que proporcionou um melhor desempenho foi de 1,502.</p>
+<div class="figure" style="text-align: center">
+<img src="work-master_files/figure-html/grafSB-1.png" alt="(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste." width="0.95\textwidth" />
+<p class="caption">
+(Esquerda) Intervalos de confiança para a área abaixo da curva ROC baseados nas 3 repetições das 10 amostras de validação cruzada. (Direita) Curva ROC dos classificados aplicados à base de teste.
+</p>
+</div>
+<p>Nos resultados obtidos dos classificadores baseados em Support Vector Machines, temos algo similar ao apresentado na Seção . Os resultados baseados na validação cruzada, apresentados à esquerda na Figura , favorecem o classificador que utiliza a expansão de característica via kernel Gaussiano, embora os intervalos se estejam sobrepostos. Porém, nos resultados dos classificadores quando aplicados à base de teste são muito similares, à direita da Figura . Complementando a visualização gráfico os resultados pontuais são apresentados na Tabela . Nota-se que os classificadores obtiveram resultados realmente muito parecidos, mesmo para os resultados na validação cruzada a diferença se dá somente com três casas decimais.</p>
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores fundamentados em
+Support Vector Machines}
+\label{tab:GB}
+\begin{tabular}{lccc}
+\hline
+{\bf Medida} &amp; {\bf SVM-Linear} &amp; {\bf SVM-Poly} &amp; {\bf SVM-Gauss} \\
+\hline
+% latex table generated in R 3.3.1 by xtable 1.8-2 package
+% Mon Aug  8 01:51:19 2016
+ AUC* &amp; 0,971 (0,968, 0,974) &amp; 0,969 (0,965, 0,973) &amp; 0,976 (0,973, 0,979) \\ 
+  Acurácia* &amp; 0,934 (0,92, 0,947) &amp; 0,935 (0,92, 0,947) &amp; 0,936 (0,921, 0,948) \\ 
+   \hline Sensibilidade &amp; 0,958 &amp; 0,963 &amp; 0,956 \\ 
+  Especificidade &amp; 0,897 &amp; 0,892 &amp; 0,904 \\ 
+  PPV &amp; 0,935 &amp; 0,932 &amp; 0,939 \\ 
+  NPV &amp; 0,933 &amp; 0,94 &amp; 0,93 \\ 
+  AUC &amp; 0,973 &amp; 0,974 &amp; 0,976 \\ 
+  
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+<p>Mesmo que timidamente, nota-se que a expansão de características via kernel Gaussiano proporcionou melhores resultados. Assim manteve-se esse classificador no rol de classificadores elencados para comparação entre abordagens.</p>
+</div>
+<div id="comparacao-das-abordagens" class="section level2">
+<h2>Comparação das abordagens</h2>
+<p>Nesta seção, os métodos que apresentaram melhor desempenho em cada abordagem são contrastados. Os métodos sob comparação são os denominados por <code>LDA</code>, <code>GLM-MLE</code>, <code>Rand-Forest</code> e <code>SVM-Gauss</code>. Na figura , à esquerda, são apresentadas as curvas ROC, provenientes da classificação da base de teste, para cada um dos classificadores. As curvas apresentam comportamentos razoavelmente similares, mas percebe-se que o classificador <code>LDA</code> apresentou um desempenho insatisfatório com relação dos demais. Isso também é observado nos resultados da validação cruzada, apresentados à direita da Figura . Cada ponto neste gráfico representa um valor de AUC de cada um dos classificadores na validação cruzada. Perceba os valores obtidos para <code>LDA</code> estão todos abaixo da linha pontilhada que representa a igualdade de valores, ressaltando seu mal desempenho em comparação com os demais. Nas outras dispersões nota-se um melhor desempenho para <code>Rand-Forest</code> e uma similaridade entre <code>GLM-MLE</code> e <code>SVM-Gauss</code>.</p>
+<div class="figure" style="text-align: center">
+<img src="work-master_files/figure-html/final1-1.png" alt="(Esquerda) Curva ROC dos classificadores aplicados à base de teste. (Direita) Gráficos de dispersão dos valores de AUC obtidos para cada uma das 30 amostras da validação cruzada." width="0.95\textwidth" />
+<p class="caption">
+(Esquerda) Curva ROC dos classificadores aplicados à base de teste. (Direita) Gráficos de dispersão dos valores de AUC obtidos para cada uma das 30 amostras da validação cruzada.
+</p>
+</div>
+<p>Na Figura  outra apresentamos outra forma de comparação dos classificadores. Nesta figura temos os intervalos de confiança para a <code>especificidade</code>, <code>sensibilidade</code> e <code>AUC</code>, à esquerda, e os valores de AUC para cada uma das amostra da validação cruzada de cada uma dos classificadores, à direita. Em ambos gráficos a mesma indicação observada na Figura  pode ser vista. Temos desempenhos melhores seguindo a ordem <code>Rand-Forest</code>, <code>SVM-Gauss</code>, <code>GLM-MLE</code> e por fim <code>LDA</code>.</p>
+<div class="figure" style="text-align: center">
+<img src="work-master_files/figure-html/final2-1.png" alt="(Esquerda) Intervalos de confiança para especificidade, sensibilidade e área abaixo da curva ROC. (Direita) Valores de AUC. Ambos baseados nas 3 repetições das 10 amostras de validação cruzada" width="0.8\linewidth" />
+<p class="caption">
+(Esquerda) Intervalos de confiança para especificidade, sensibilidade e área abaixo da curva ROC. (Direita) Valores de AUC. Ambos baseados nas 3 repetições das 10 amostras de validação cruzada
+</p>
+</div>
+\begin{table}[H]
+\centering
+\caption{Resumos da curva ROC dos classificadores com melhores
+desempenhos}
+\label{tab:DB}
+\begin{tabular}{lcccc}
+\hline
+{\bf Medida} &amp; {\bf LDA} &amp; {\bf GLM-MLE} &amp; {\bf Rand-Forest} &amp; {\bf SVM-Gauss} \\
+\hline
+% latex table generated in R 3.3.1 by xtable 1.8-2 package
+% Mon Aug  8 01:51:24 2016
+ AUC* &amp; 0,947 (0,943, 0,952) &amp; 0,969 (0,966, 0,972) &amp; 0,983 (0,981, 0,986) &amp; 0,976 (0,973, 0,979) \\ 
+  Acurácia* &amp; 0,899 (0,882, 0,915) &amp; 0,927 (0,912, 0,94) &amp; 0,951 (0,939, 0,962) &amp; 0,936 (0,921, 0,948) \\ 
+   \hline Sensibilidade &amp; 0,955 &amp; 0,949 &amp; 0,965 &amp; 0,956 \\ 
+  Especificidade &amp; 0,814 &amp; 0,893 &amp; 0,93 &amp; 0,904 \\ 
+  PPV &amp; 0,888 &amp; 0,932 &amp; 0,955 &amp; 0,939 \\ 
+  NPV &amp; 0,921 &amp; 0,919 &amp; 0,946 &amp; 0,93 \\ 
+  AUC &amp; 0,956 &amp; 0,974 &amp; 0,979 &amp; 0,976 \\ 
+  
+\hline
+\end{tabular}
+\begin{tablenotes}
+  \footnotesize
+\item $^*$Valor com intervalo de confiança de 95\% baseado nas 30 amostras
+de validação cruzada apresentado entre parênteses.
+\end{tablenotes}
+\end{table}
+<p>Com os resultados apresentados anteriormente temos que o melhor desempenho para classificação se deu considerando a abordagem baseada em árvores de decisão, mas especificamente o classificador <strong>Random Forest</strong>. Para as abordagens via Support Vector Machines (considerando a expansão via kernel Gaussiano) e Modelos Lineares Generalizados (modelo logístico ajustado via máxima verossimilhança) observou-se resultados similares e satisfatórios. Já para os métodos baseados em Análise Discriminante não se obteve um desempenho em comparação com as demais técnicas.</p>
+\subsubsection*{Material Suplementar}
+<p>Toda a análise foi realizada com o auxílio do software R e está disponível online no endereço &lt;&gt;. Dúvidas, sugestões e críticas são sempre bem-vindas.</p>
+</div>
+</div>
+<div id="conclusoes" class="section level1">
+<h1>Conclusões</h1>
+<p>No desenvolvimento do trabalho foram apresentados onze técnicas para obtenção de classificadores, seccionadas em quatro grandes áreas com abordagens distintas de classificação (fundamentadas em análise discriminante, modelos lineares, generalizados, árvores de decisão e support vector machines). Na aplicações das técnicas de classificação observou-se resultados muito bons no que tange a predição, isso se deve ao fato do conjunto de dados em estudo apresentar covariáveis mensuradas que favoreceram a classificação.</p>
+<p>Mesmo com todos os classificadores apresentando bons resultados de classificação pode-se compará-los através de resumos da curva ROC e dos resultados da validação cruzada e nessa comparação foram verificados melhores desempenhos dos classificadores baseados em árvores de decisão.</p>
+<p></p>
+</div>
+<div id="referencias" class="section level1">
+<h1>Referências</h1>
+<p></p>
+<div id="refs" class="references">
+<div id="ref-Breiman2001">
+<p>BREIMAN, L. Statistical Modeling: The Two Cultures. <strong>Statistical Science</strong>, v. 16, n. 3, p. 199–231, ago. 2001. </p>
+</div>
+<div id="ref-Hofner2014">
+<p>HOFNER, B. et al. Model-based boosting in R: A hands-on tutorial using the R package mboost. <strong>Computational Statistics</strong>, v. 29, p. 3–35, 2014. </p>
+</div>
+<div id="ref-james2013">
+<p>JAMES, G. et al. <strong>An introduction to statistical learning</strong>. Traducao. [s.l.] Springer, 2013. v. 112</p>
+</div>
+<div id="ref-Kuhn2008">
+<p>KUHN, M. Building Predictive Models in R Using the caret Package. <strong>Journal Of Statistical Software</strong>, v. 28, n. 5, p. 1–26, 2008. </p>
+</div>
+<div id="ref-Lichman2013">
+<p>LICHMAN, M. <strong>UCI machine learning repository</strong>University of California, Irvine, School of Information; Computer Sciences, 2013. Disponível em: &lt;<a href="http://archive.ics.uci.edu/ml" class="uri">http://archive.ics.uci.edu/ml</a>&gt;</p>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Website da empresa <a href="http://www.hp.com/" class="uri">http://www.hp.com/</a><a href="#fnref1">↩</a></p></li>
+</ol>
+</div>
+
+<!-- disqus -->
+ <div id="disqus_thread" class="standardPadding"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'rmarkdown'; // required: replace example with your forum shortname
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<!-- <\!-- disqus -\-> -->
+<!--  <div id="disqus_thread" class="standardPadding"></div> -->
+<!--     <script type="text/javascript"> -->
+<!--         /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */ -->
+<!--         var disqus_shortname = 'eerj-website'; // required: replace example with your forum shortname -->
+<!--         /* * * DON'T EDIT BELOW THIS LINE * * */ -->
+<!--         (function() { -->
+<!--             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true; -->
+<!--             dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js'; -->
+<!--             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq); -->
+<!--         })(); -->
+<!--     </script> -->
+<!--     <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript> -->
+<!--     <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> -->
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

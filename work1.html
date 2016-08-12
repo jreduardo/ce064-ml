@@ -185,7 +185,7 @@ $(document).ready(function () {
 <div class="container-fluid main-container">
 
 <!-- tabsets -->
-<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
@@ -193,7 +193,7 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
-<script src="site_libs/navigation-1.0/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <script>
 $(document).ready(function () {
   window.initializeCodeFolding("show" === "show");
@@ -241,6 +241,7 @@ $(document).ready(function ()  {
   width: 100%;
 }
 }
+
 
 .toc-content {
   padding-left: 30px;
@@ -374,10 +375,11 @@ div.tocify {
 <div class="btn-group pull-right">
 <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
 <ul class="dropdown-menu" style="min-width: 50px;">
-<li><a id="rmd-show-all-code" href="#">Show All</a></li>
-<li><a id="rmd-hide-all-code" href="#">Hide All</a></li>
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
 </ul>
 </div>
+
 
 
 <h1 class="title toc-ignore">Machine Learning - Regressão Linear</h1>
@@ -439,7 +441,7 @@ compara &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span c
        <span class="dt">grid =</span> <span class="ot">TRUE</span>,
        <span class="dt">pch =</span> <span class="dv">19</span>,
        <span class="dt">data =</span> compara)</code></pre></div>
-<p><img src="work1_files/figure-html/unnamed-chunk-4-1.png" title="" alt="" width="672" /></p>
+<p><img src="work1_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">coefsAic &lt;-<span class="st"> </span>test$coef[<span class="kw">which.max</span>(compara$acertos)][[<span class="dv">1</span>]]
 coefsMassive &lt;-<span class="st"> </span>test$coef[<span class="kw">which.max</span>(compara$acertos)][[<span class="dv">1</span>]]</code></pre></div>
 <p>Neste gráfico o padrão esperado deveria ser uma relação linear inversamente proporcional, ou seja, quanto menor o AIC maior o percentual de acertos. Porém não é, exatamente, o observado na figura. Notamos que há uma correlação negativa entre as medidas mas há também, uma variabilidade muito grande ocasionando discordância na escolha de modelos pelas duas alternativas. Dentre os 50 modelos estimados o melhor modelo sugerido pelo AIC é o que contém as variáveis <em>(Intercept), chlorides, total.sulfur.dioxide, pH, sulphates, alcohol</em> e o modelo sugerido pelo percentual de acertos contém <em>(Intercept), chlorides, total.sulfur.dioxide, pH, sulphates, alcohol</em>.</p>
@@ -454,7 +456,7 @@ coefsMassive &lt;-<span class="st"> </span>test$coef[<span class="kw">which.max<
 <h1>Informações da sessão R</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">format</span>(<span class="kw">Sys.time</span>(),
            <span class="dt">format =</span> <span class="st">&quot;Atualizado em %d de %B de %Y.</span><span class="ch">\n\n</span><span class="st">&quot;</span>))</code></pre></div>
-<pre><code>## Atualizado em 08 de agosto de 2016.</code></pre>
+<pre><code>## Atualizado em 11 de agosto de 2016.</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()</code></pre></div>
 <pre><code>## R version 3.3.1 (2016-06-21)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
@@ -472,23 +474,52 @@ coefsMassive &lt;-<span class="st"> </span>test$coef[<span class="kw">which.max<
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] xtable_1.8-2        knitr_1.12.3        latticeExtra_0.6-28
+## [1] xtable_1.8-2        knitr_1.13          latticeExtra_0.6-28
 ## [4] RColorBrewer_1.1-2  lattice_0.20-33    
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] magrittr_1.5      MASS_7.3-45       splines_3.3.1    
-##  [4] nnls_1.4          quadprog_1.5-5    multcomp_1.4-5   
-##  [7] stringr_1.0.0     tools_3.3.1       stabs_0.5-1      
-## [10] parallel_3.3.1    grid_3.3.1        TH.data_1.0-7    
-## [13] modeltools_0.2-21 htmltools_0.3     yaml_2.1.13      
-## [16] survival_2.39-4   mboost_2.6-0      digest_0.6.9     
-## [19] Matrix_1.2-6      party_1.0-25      formatR_1.3      
-## [22] codetools_0.2-14  strucchange_1.5-1 evaluate_0.9     
-## [25] rmarkdown_0.9.6   coin_1.1-2        sandwich_2.3-4   
-## [28] stringi_1.0-1     compiler_3.3.1    stats4_3.3.1     
+##  [1] Rcpp_0.12.6       magrittr_1.5      MASS_7.3-45      
+##  [4] splines_3.3.1     nnls_1.4          quadprog_1.5-5   
+##  [7] multcomp_1.4-5    stringr_1.0.0     tools_3.3.1      
+## [10] stabs_0.5-1       parallel_3.3.1    grid_3.3.1       
+## [13] TH.data_1.0-7     modeltools_0.2-21 htmltools_0.3.5  
+## [16] yaml_2.1.13       survival_2.39-4   mboost_2.6-0     
+## [19] digest_0.6.10     Matrix_1.2-6      party_1.0-25     
+## [22] formatR_1.4       codetools_0.2-14  strucchange_1.5-1
+## [25] evaluate_0.9      rmarkdown_1.0     coin_1.1-2       
+## [28] sandwich_2.3-4    stringi_1.1.1     stats4_3.3.1     
 ## [31] mvtnorm_1.0-5     zoo_1.7-13</code></pre>
 </div>
 
+<!-- disqus -->
+ <div id="disqus_thread" class="standardPadding"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'rmarkdown'; // required: replace example with your forum shortname
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+<!-- <\!-- disqus -\-> -->
+<!--  <div id="disqus_thread" class="standardPadding"></div> -->
+<!--     <script type="text/javascript"> -->
+<!--         /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */ -->
+<!--         var disqus_shortname = 'eerj-website'; // required: replace example with your forum shortname -->
+<!--         /* * * DON'T EDIT BELOW THIS LINE * * */ -->
+<!--         (function() { -->
+<!--             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true; -->
+<!--             dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js'; -->
+<!--             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq); -->
+<!--         })(); -->
+<!--     </script> -->
+<!--     <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript> -->
+<!--     <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> -->
 
 
 </div>
