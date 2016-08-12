@@ -408,16 +408,16 @@ div.tocify {
 <span class="kw">load</span>(<span class="st">&quot;./data/wine.rda&quot;</span>)
 <span class="kw">str</span>(wine)</code></pre></div>
 <pre><code>## &#39;data.frame&#39;:    4898 obs. of  11 variables:
-##  $ fixed.acidity       : num  7 6,3 8,1 7,2 7,2 8,1 6,2 7 6,3 8,1 ...
-##  $ volatile.acidity    : num  0,27 0,3 0,28 0,23 0,23 0,28 0,32 0,27 0,3 0,22 ...
-##  $ citric.acid         : num  0,36 0,34 0,4 0,32 0,32 0,4 0,16 0,36 0,34 0,43 ...
-##  $ residual.sugar      : num  20,7 1,6 6,9 8,5 8,5 6,9 7 20,7 1,6 1,5 ...
-##  $ chlorides           : num  0,045 0,049 0,05 0,058 0,058 0,05 0,045 0,045 0,049 0,044 ...
+##  $ fixed.acidity       : num  7 6.3 8.1 7.2 7.2 8.1 6.2 7 6.3 8.1 ...
+##  $ volatile.acidity    : num  0.27 0.3 0.28 0.23 0.23 0.28 0.32 0.27 0.3 0.22 ...
+##  $ citric.acid         : num  0.36 0.34 0.4 0.32 0.32 0.4 0.16 0.36 0.34 0.43 ...
+##  $ residual.sugar      : num  20.7 1.6 6.9 8.5 8.5 6.9 7 20.7 1.6 1.5 ...
+##  $ chlorides           : num  0.045 0.049 0.05 0.058 0.058 0.05 0.045 0.045 0.049 0.044 ...
 ##  $ free.sulfur.dioxide : num  45 14 30 47 47 30 30 45 14 28 ...
 ##  $ total.sulfur.dioxide: num  170 132 97 186 186 97 136 170 132 129 ...
-##  $ pH                  : num  3 3,3 3,26 3,19 3,19 3,26 3,18 3 3,3 3,22 ...
-##  $ sulphates           : num  0,45 0,49 0,44 0,4 0,4 0,44 0,47 0,45 0,49 0,45 ...
-##  $ alcohol             : num  8,8 9,5 10,1 9,9 9,9 10,1 9,6 8,8 9,5 11 ...
+##  $ pH                  : num  3 3.3 3.26 3.19 3.19 3.26 3.18 3 3.3 3.22 ...
+##  $ sulphates           : num  0.45 0.49 0.44 0.4 0.4 0.44 0.47 0.45 0.49 0.45 ...
+##  $ alcohol             : num  8.8 9.5 10.1 9.9 9.9 10.1 9.6 8.8 9.5 11 ...
 ##  $ quality             : int  6 6 6 6 6 6 6 6 6 6 ...</code></pre>
 <p>Devido a grande quantidade de observações, 4898 ao todo, preferiu-se utilizar apenas 500 observações para aplicação do método. Além disso o número de modelos a serem estimados foi fixado em 50, não mais todos os modelos que podem ser estimados. Isso devido ao tempo computacional demasiadamente gasto para execução da função. Abaixo temos o carregamento da função e sua utilização neste (sub)conjunto de dados.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">source</span>(<span class="st">&quot;https://gitlab.c3sl.ufpr.br/di12/massive/raw/master/R/massive.R&quot;</span>)
@@ -456,7 +456,7 @@ coefsMassive &lt;-<span class="st"> </span>test$coef[<span class="kw">which.max<
 <h1>Informações da sessão R</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">format</span>(<span class="kw">Sys.time</span>(),
            <span class="dt">format =</span> <span class="st">&quot;Atualizado em %d de %B de %Y.</span><span class="ch">\n\n</span><span class="st">&quot;</span>))</code></pre></div>
-<pre><code>## Atualizado em 11 de agosto de 2016.</code></pre>
+<pre><code>## Atualizado em 12 de agosto de 2016.</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()</code></pre></div>
 <pre><code>## R version 3.3.1 (2016-06-21)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
@@ -474,37 +474,25 @@ coefsMassive &lt;-<span class="st"> </span>test$coef[<span class="kw">which.max<
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] xtable_1.8-2        knitr_1.13          latticeExtra_0.6-28
-## [4] RColorBrewer_1.1-2  lattice_0.20-33    
+## [1] latticeExtra_0.6-28 RColorBrewer_1.1-2  lattice_0.20-33    
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.6       magrittr_1.5      MASS_7.3-45      
-##  [4] splines_3.3.1     nnls_1.4          quadprog_1.5-5   
-##  [7] multcomp_1.4-5    stringr_1.0.0     tools_3.3.1      
-## [10] stabs_0.5-1       parallel_3.3.1    grid_3.3.1       
-## [13] TH.data_1.0-7     modeltools_0.2-21 htmltools_0.3.5  
-## [16] yaml_2.1.13       survival_2.39-4   mboost_2.6-0     
-## [19] digest_0.6.10     Matrix_1.2-6      party_1.0-25     
-## [22] formatR_1.4       codetools_0.2-14  strucchange_1.5-1
-## [25] evaluate_0.9      rmarkdown_1.0     coin_1.1-2       
-## [28] sandwich_2.3-4    stringi_1.1.1     stats4_3.3.1     
-## [31] mvtnorm_1.0-5     zoo_1.7-13</code></pre>
+##  [1] compiler_3.3.1  magrittr_1.5    formatR_1.4     tools_3.3.1    
+##  [5] htmltools_0.3.5 yaml_2.1.13     Rcpp_0.12.6     stringi_1.1.1  
+##  [9] rmarkdown_1.0   grid_3.3.1      knitr_1.13      stringr_1.0.0  
+## [13] digest_0.6.10   evaluate_0.9</code></pre>
 </div>
 
-<!-- disqus -->
- <div id="disqus_thread" class="standardPadding"></div>
-    <script type="text/javascript">
-        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-        var disqus_shortname = 'rmarkdown'; // required: replace example with your forum shortname
-        /* * * DON'T EDIT BELOW THIS LINE * * */
-        (function() {
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
-    </script>
-    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+<div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_shortname = 'eerj-website';
+    (function() {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 
 <!-- <\!-- disqus -\-> -->
 <!--  <div id="disqus_thread" class="standardPadding"></div> -->
